@@ -3,7 +3,15 @@ using System.Linq;
 using System;
 using System.Runtime.CompilerServices;
 
+const string FILE_PROGRAM = "mk2.program";
+const string FILE_GRAPHICS = "mk2.graphics";
+const string FILE_SOUNDS = "mk2.sounds";
+const string FILE_HEADERS = "gfx_headers.txt";
+const string PATH_IMAGES = "Images/";
+const string PATH_SOUNDS = "Sounds/";
+
 Console.WriteLine("[MKII ASSET EXTRACTOR]");
+Thread.Sleep(1000);
 ListOptions();
 
 while (true)
@@ -13,7 +21,6 @@ while (true)
     switch (keyInfo.Key)
     {
         case ConsoleKey.NumPad1:
-            Console.WriteLine("Extracing Image Headers...");
             ExtractImageHeaders();
             Console.WriteLine("Done. Header listings output @ gfx_headers.txt");
             ListOptions();
@@ -44,25 +51,41 @@ while (true)
 static void ListOptions()
 {
     Console.WriteLine("\nCHOOSE AN OPTION:");
+    Thread.Sleep(400);
     Console.WriteLine("1: Extract Image Headers.");
+    Thread.Sleep(200);
     Console.WriteLine("2: Create Images From Headers.");
+    Thread.Sleep(200);
     Console.WriteLine("3: Extract Color Palettes.");
+    Thread.Sleep(200);
     Console.WriteLine("ESC: Exit");
+}
+
+static void InterleaveFiles()
+{
+
 }
 
 static void ExtractImageHeaders()
 {
-    Console.WriteLine("Searching for GFX Headers...\n");
+    if (!File.Exists(FILE_HEADERS))
+    {
+        FileStream fileStream = File.Create(FILE_HEADERS);
+        fileStream.Close();
+    }
+        
+    Console.WriteLine("\nSearching for GFX Headers...\n");
+    Thread.Sleep(1000);
     Console.WriteLine("ROM  |W   |H   |XOFF|YOFF|GFX LOC |DMA\n" +
       "---------------------------------------");
 
-    List<byte> program = new List<byte>();
-    program.AddRange(File.ReadAllBytes("mk2.program").ToList());
+    List<byte> program = new();
+    program.AddRange(File.ReadAllBytes(FILE_PROGRAM).ToList());
 
     int word = 0;
-    List<int> header = new List<int>();
+    List<int> header = new();
     int address = 0;
-    StreamWriter writer = new StreamWriter("gfx_headers.txt");
+    StreamWriter writer = new(FILE_HEADERS);
 
     for (int bytecount = 0; bytecount < program.Count - 128;)
     {
@@ -121,12 +144,18 @@ static void ExtractImageHeaders()
 
 static void CreateImages()
 {
-    List<byte> graphics = new List<byte>();
-    graphics.AddRange(File.ReadAllBytes("mk2.graphics").ToList());
+    List<byte> graphics = new();
+    graphics.AddRange(File.ReadAllBytes(FILE_GRAPHICS).ToList());
+    
+    if(!Directory.Exists(PATH_IMAGES))
+        Directory.CreateDirectory(PATH_IMAGES);
 }
 
 static void ExtractSounds()
 {
-    List<byte> sounds = new List<byte>();
-    sounds.AddRange(File.ReadAllBytes("mk2.sounds").ToList());
+    List<byte> sounds = new();
+    sounds.AddRange(File.ReadAllBytes(FILE_SOUNDS).ToList());
+
+    if (!Directory.Exists(PATH_SOUNDS))
+        Directory.CreateDirectory(PATH_SOUNDS);
 }
