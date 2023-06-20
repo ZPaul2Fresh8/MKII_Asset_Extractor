@@ -13,3 +13,13 @@ C:\Users\paule\source\repos\MKII_Asset_Extractor\MKII_Asset_Extractor\obj\Debug\
 C:\Users\paule\source\repos\MKII_Asset_Extractor\MKII_Asset_Extractor\obj\Debug\net6.0\MKII_Asset_Extractor.pdb
 C:\Users\paule\source\repos\MKII_Asset_Extractor\MKII_Asset_Extractor\obj\Debug\net6.0\MKII_Asset_Extractor.genruntimeconfig.cache
 C:\Users\paule\source\repos\MKII_Asset_Extractor\MKII_Asset_Extractor\obj\Debug\net6.0\ref\MKII_Asset_Extractor.dll
+C:\Users\paule\source\repos\MKII_Asset_Extractor\MKII_Asset_Extractor\bin\Debug\net6.0\Microsoft.Win32.SystemEvents.dll
+C:\Users\paule\source\repos\MKII_Asset_Extractor\MKII_Asset_Extractor\bin\Debug\net6.0\SkiaSharp.dll
+C:\Users\paule\source\repos\MKII_Asset_Extractor\MKII_Asset_Extractor\bin\Debug\net6.0\System.Drawing.Common.dll
+C:\Users\paule\source\repos\MKII_Asset_Extractor\MKII_Asset_Extractor\bin\Debug\net6.0\runtimes\win\lib\net6.0\Microsoft.Win32.SystemEvents.dll
+C:\Users\paule\source\repos\MKII_Asset_Extractor\MKII_Asset_Extractor\bin\Debug\net6.0\runtimes\osx\native\libSkiaSharp.dylib
+C:\Users\paule\source\repos\MKII_Asset_Extractor\MKII_Asset_Extractor\bin\Debug\net6.0\runtimes\win-arm64\native\libSkiaSharp.dll
+C:\Users\paule\source\repos\MKII_Asset_Extractor\MKII_Asset_Extractor\bin\Debug\net6.0\runtimes\win-x64\native\libSkiaSharp.dll
+C:\Users\paule\source\repos\MKII_Asset_Extractor\MKII_Asset_Extractor\bin\Debug\net6.0\runtimes\win-x86\native\libSkiaSharp.dll
+C:\Users\paule\source\repos\MKII_Asset_Extractor\MKII_Asset_Extractor\bin\Debug\net6.0\runtimes\win\lib\net6.0\System.Drawing.Common.dll
+C:\Users\paule\source\repos\MKII_Asset_Extractor\MKII_Asset_Extractor\obj\Debug\net6.0\MKII_Asset_Extractor.csproj.CopyComplete
