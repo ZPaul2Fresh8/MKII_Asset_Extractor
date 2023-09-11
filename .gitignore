@@ -16,3 +16,7 @@ MKII_Asset_Extractor/bin/Debug/net6.0/roms/uj20-vid
 MKII_Asset_Extractor/bin/Debug/net6.0/roms/uj22-vid
 MKII_Asset_Extractor/bin/Debug/net6.0/mk2.graphics
 MKII_Asset_Extractor/bin/Debug/net6.0/mk2.program
+MKII_Asset_Extractor/bin/
+MKII_Asset_Extractor/obj/
+.vs/MKII_Asset_Extractor/
+MKII_Asset_Extractor\DesignTimeBuild\

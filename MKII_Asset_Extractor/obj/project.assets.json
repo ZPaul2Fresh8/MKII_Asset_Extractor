@@ -309,7 +309,8 @@
   },
   "packageFolders": {
     "C:\\Users\\paule\\.nuget\\packages\\": {},
-    "C:\\Users\\paule\\AppData\\Roaming\\Godot\\mono\\GodotNuGetFallbackFolder": {}
+    "C:\\Users\\paule\\AppData\\Roaming\\Godot\\mono\\GodotNuGetFallbackFolder": {},
+    "C:\\Program Files (x86)\\Microsoft\\Xamarin\\NuGet\\": {}
   },
   "project": {
     "version": "1.0.0",
@@ -321,12 +322,14 @@
       "outputPath": "C:\\Users\\paule\\source\\repos\\MKII_Asset_Extractor\\MKII_Asset_Extractor\\obj\\",
       "projectStyle": "PackageReference",
       "fallbackFolders": [
-        "C:\\Users\\paule\\AppData\\Roaming\\Godot\\mono\\GodotNuGetFallbackFolder"
+        "C:\\Users\\paule\\AppData\\Roaming\\Godot\\mono\\GodotNuGetFallbackFolder",
+        "C:\\Program Files (x86)\\Microsoft\\Xamarin\\NuGet\\"
       ],
       "configFilePaths": [
         "C:\\Users\\paule\\AppData\\Roaming\\NuGet\\NuGet.Config",
         "C:\\Users\\paule\\AppData\\Roaming\\NuGet\\config\\Godot.Offline.Config",
-        "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.Offline.config"
+        "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.Offline.config",
+        "C:\\Program Files (x86)\\NuGet\\Config\\Xamarin.Offline.config"
       ],
       "originalTargetFrameworks": [
         "net6.0"

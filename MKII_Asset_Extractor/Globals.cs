@@ -19,6 +19,8 @@ namespace MKII_Asset_Extractor
         public static List<byte> PRG = new List<byte>();
         public static List<byte> GFX = new List<byte>();
         public static List<SKColor> PALETTE = new List<SKColor>();
+
+        public static int GFX_BYTES_EXTRACTED = 0;
     }
 
 	public static class Enums

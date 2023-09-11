@@ -10,53 +10,53 @@ ListOptions();
 
 while (true)
 {
-    ConsoleKeyInfo keyInfo = Console.ReadKey(true); // Read a key input without displaying it
+    ConsoleKeyInfo keyInfo = Console.ReadKey(intercept: true); // Read a key input without displaying it
 
-    switch (keyInfo.Key)
+    switch (keyInfo.KeyChar)
     {
-        case ConsoleKey.NumPad1:
+        case (char)ConsoleKey.NumPad1:
             ExtractImageHeaders();
             Console.WriteLine("Done. Header listings output @ gfx_headers.txt");
             ListOptions();
             break;
 
-        case ConsoleKey.NumPad2:
-            Console.WriteLine("Creating Images...");
+        case (char)ConsoleKey.NumPad2:
+            Console.WriteLine("\nCreating Images From Headers...");
             CreateImages();
             ListOptions();
             break;
 
-        case ConsoleKey.NumPad3:
-            Console.WriteLine("Extracting Sounds...");
+        case (char)ConsoleKey.NumPad3:
+            Console.WriteLine("\nExtracting Sounds...");
             ExtractSounds();
             ListOptions();
             break;
 
-        case ConsoleKey.NumPad4:
-            Console.WriteLine("Interleaving Program Roms...");
+        case (char)ConsoleKey.NumPad4:
+            Console.WriteLine("\nInterleaving Program Roms...");
             Interleave_PRG();
             ListOptions();
             break;
 
-        case ConsoleKey.NumPad5:
-            Console.WriteLine("Interleaving Graphic Roms...");
+        case (char)ConsoleKey.NumPad5:
+            Console.WriteLine("\nInterleaving Graphic Roms...");
             Interleave_GFX();
             ListOptions();
             break;
 
-        case ConsoleKey.NumPad6:
-            Console.WriteLine("Extracing Fonts...");
+        case (char)ConsoleKey.NumPad6:
+            Console.WriteLine("\nExtracting Fonts...");
             Extract_Fonts();
             ListOptions();
             break;
 
-        case ConsoleKey.NumPad7:
-            Console.WriteLine("Extracing Animations...");
+        case (char)ConsoleKey.NumPad7:
+            Console.WriteLine("\nExtracting Animations...");
             Extract_Animations();
             ListOptions();
             break;
 
-        case ConsoleKey.Escape:
+        case (char)ConsoleKey.Escape:
             Console.WriteLine("Exiting...");
             return; // Exit the program
 
@@ -69,21 +69,21 @@ while (true)
 static void ListOptions()
 {
     Console.WriteLine("\nCHOOSE AN OPTION:");
-    Thread.Sleep(200);
-    Console.WriteLine("1: Extract Image Headers.");
-    Thread.Sleep(100);
-    Console.WriteLine("2: Create Images From Headers.");
-    Thread.Sleep(100);
-    Console.WriteLine("3: Extract Color Palettes.");
-    Thread.Sleep(100);
-    Console.WriteLine("4: Interleave Program ROMs.");
-    Thread.Sleep(100);
-    Console.WriteLine("5: Interleave Graphic ROMs.");
-    Thread.Sleep(100);
-    Console.WriteLine("6: Extract Fonts.");
-    Thread.Sleep(100);
-    Console.WriteLine("7: Extract Animations.");
-    Thread.Sleep(100);
+    Thread.Sleep(150);
+    Console.WriteLine("1(A): Extract Image Headers.");
+    Thread.Sleep(50);
+    Console.WriteLine("2(B): Create Images From Headers.");
+    Thread.Sleep(50);
+    Console.WriteLine("3(C): Extract Color Palettes.");
+    Thread.Sleep(50);
+    Console.WriteLine("4(D): Interleave Program ROMs.");
+    Thread.Sleep(50);
+    Console.WriteLine("5(E): Interleave Graphic ROMs.");
+    Thread.Sleep(50);
+    Console.WriteLine("6(F): Extract Fonts.");
+    Thread.Sleep(50);
+    Console.WriteLine("7(G): Extract Animations.");
+    Thread.Sleep(50);
     Console.WriteLine("ESC: Exit");
 }
 
@@ -165,18 +165,17 @@ static void ExtractImageHeaders()
         
     Console.WriteLine("\nSearching for GFX Headers...\n");
     Thread.Sleep(1000);
-    Console.WriteLine("ROM  |W   |H   |XOFF|YOFF|GFX LOC |DMA\n" +
-      "---------------------------------------");
+    Console.WriteLine("ROM  |W   |H   |XOFF|YOFF|GFX LOC |DMA |PALETTE\n" +
+      "------------------------------------------------");
 
-    List<byte> program = new();
-    program.AddRange(File.ReadAllBytes(Globals.FILE_PROGRAM).ToList());
+    if (!PRG_Check()) { return; }
 
     int word = 0;
     List<int> header = new();
     int address = 0;
     StreamWriter writer = new(Globals.FILE_HEADERS);
 
-    for (int bytecount = 0; bytecount < program.Count - 128;)
+    for (int bytecount = 0; bytecount < Globals.PRG.Count - 128;)
     {
         // format header
         header.Clear();
@@ -184,13 +183,11 @@ static void ExtractImageHeaders()
 
         //check width criteria
         make_word();
-        if (word > 0xff) { continue; }
-        if (word <= 1) { continue; }
+        if (word > 0xff || word <= 1)  { continue; }
 
         //check height criteria
         make_word();
-        if (word > 0xff) { continue; }
-        if (word <= 1) { continue; }
+        if (word > 0xff || word <= 1) { continue; }
 
         // grab x offset
         make_word();
@@ -213,10 +210,23 @@ static void ExtractImageHeaders()
         if ((word >> 0xc) > 6) { continue; }
         else if ((word >> 0xc) == 0) { continue; }
         else if ((word & 0xf) != 0) { continue; }
-        
+
+        // check for valid palette address
+        make_word();
+        if ((word & 1) != 0 ) { continue; }
+
+        // grab palette address major - highest value should be < 0xFF80
+        make_word();
+        if (word < 0xff80) { continue; }
+
+        // build address and check if the value is a valid palette size
+        var pal_loc = ((header[8] << 16 | header[7]) / 8) & 0xfffff;
+        var size = Globals.PRG[pal_loc] | Globals.PRG[pal_loc + 1];
+        if (size > 0x40) { continue; }
+
         // build string
         string line = $"{address:X5}|{header[0]:X4}|{header[1]:X4}|{header[2]:X4}|{header[3]:X4}" +
-            $"|{header[5]:X4}{header[4]:X4}|{header[6]:X4}";
+            $"|{header[5]:X4}{header[4]:X4}|{header[6]:X4}|{header[8]:X4}{header[7]:X4}";
 
         // print(line)	
         writer.WriteLine(line);
@@ -224,7 +234,7 @@ static void ExtractImageHeaders()
 
         void make_word()
         {
-            word = program[bytecount] << 8 | program[bytecount + 1];
+            word = Globals.PRG[bytecount] << 8 | Globals.PRG[bytecount + 1];
             header.Add(word);
             bytecount += 2;
         }
@@ -233,11 +243,12 @@ static void ExtractImageHeaders()
 
 static void CreateImages()
 {
-    List<byte> graphics = new();
-    graphics.AddRange(File.ReadAllBytes(Globals.FILE_GRAPHICS).ToList());
-    
-    if(!Directory.Exists(Globals.PATH_IMAGES))
-        Directory.CreateDirectory(Globals.PATH_IMAGES);
+    if (!PRG_Check()) { return; }
+    if (!GFX_Check()) { return; }
+
+    Extract.Bulk_Headers();
+    Console.WriteLine("\n IMAGES FROM HEADER EXTRACTION DONE!");
+    Thread.Sleep(200);
 }
 
 static void ExtractSounds()
@@ -252,6 +263,7 @@ static void ExtractSounds()
 static void Extract_Fonts()
 {
     if (!PRG_Check()) { return; }
+    if (!GFX_Check()) { return; }
 
     Extract.Fonts();
     Console.WriteLine("\n FONTS DONE!");
@@ -260,7 +272,7 @@ static void Extract_Fonts()
 
 static void Extract_Animations()
 {
-    if (!PRG_Check()) { return; }
+    if (!GFX_Check()) { return; }
     Extract.Animations();
     Console.WriteLine("\n ANIMATIONS DONE!");
     Thread.Sleep(200);
@@ -279,6 +291,27 @@ static bool PRG_Check()
         else
         {
             Console.WriteLine("\nProgram File NOT found! Try Interleaving Program files first!");
+            return false;
+        }
+    }
+    else
+        return true;
+}
+
+static bool GFX_Check()
+{
+    // check if progam files have been interleaved first
+    if (Globals.GFX == null | Globals.GFX.Count == 0)
+    {
+        if (File.Exists(Globals.FILE_GRAPHICS))
+        {
+            Globals.PRG = File.ReadAllBytes(Globals.FILE_PROGRAM).ToList();
+            Globals.GFX = File.ReadAllBytes(Globals.FILE_GRAPHICS).ToList();
+            return true;
+        }
+        else
+        {
+            Console.WriteLine("\nGraphics File NOT found! Try Interleaving Graphic files first!");
             return false;
         }
     }
