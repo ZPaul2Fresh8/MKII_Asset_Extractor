@@ -56,6 +56,19 @@ while (true)
             ListOptions();
             break;
 
+        case (char)ConsoleKey.NumPad8:
+            Console.WriteLine("\nExtracting Assets...");
+            Extract_Fonts();
+            Extract_Animations();
+            ListOptions();
+            break;
+
+        case (char)ConsoleKey.NumPad9:
+            Console.WriteLine("\nExtracting Sprite Lists...");
+            Extract_Sprite_Lists();
+            ListOptions();
+            break;
+
         case (char)ConsoleKey.Escape:
             Console.WriteLine("Exiting...");
             return; // Exit the program
@@ -83,6 +96,10 @@ static void ListOptions()
     Console.WriteLine("6(F): Extract Fonts.");
     Thread.Sleep(50);
     Console.WriteLine("7(G): Extract Animations.");
+    Thread.Sleep(50);
+    Console.WriteLine("8(H): Extract All Assets.");
+    Thread.Sleep(50);
+    Console.WriteLine("9(I): Extract Sprite Lists.");
     Thread.Sleep(50);
     Console.WriteLine("ESC: Exit");
 }
@@ -164,16 +181,18 @@ static void ExtractImageHeaders()
     }
         
     Console.WriteLine("\nSearching for GFX Headers...\n");
-    Thread.Sleep(1000);
+    Thread.Sleep(500);
     Console.WriteLine("ROM  |W   |H   |XOFF|YOFF|GFX LOC |DMA |PALETTE\n" +
       "------------------------------------------------");
 
     if (!PRG_Check()) { return; }
 
-    int word = 0;
+    short word = 0;
     List<int> header = new();
     int address = 0;
     StreamWriter writer = new(Globals.FILE_HEADERS);
+    writer.AutoFlush = true;
+
 
     for (int bytecount = 0; bytecount < Globals.PRG.Count - 128;)
     {
@@ -187,54 +206,54 @@ static void ExtractImageHeaders()
 
         //check height criteria
         make_word();
-        if (word > 0xff || word <= 1) { continue; }
+        if (word > 0xff || word <= 1) { bytecount -= 2; continue; }
 
         // grab x offset
         make_word();
-        if (word > 399 || word < -399) { continue; }
+        if (word > 399 || word < -399) { bytecount -= 4; continue; }
 
         // grab y offset
         make_word();
-        if (word > 253 || word < -253) { continue; }
+        if (word > 253 || word < -253) { bytecount -= 6; continue; }
 
         // grab sprite address minor - data doesn't really matter here either
         make_word();
 
         // grab sprite address major - highest value should be < 0x0800
         make_word();
-        if (word > 0x07ff) { continue; }
-        if (word == 0) { continue; }
+        if (word > 0x07ff) { bytecount -= 8; continue; }
+        if (word == 0) { bytecount -= 8; continue; }
 
         // check draw attribute criteria
         make_word();
-        if ((word >> 0xc) > 6) { continue; }
-        else if ((word >> 0xc) == 0) { continue; }
-        else if ((word & 0xf) != 0) { continue; }
+        word = (short)(word & 0xffff);
+        if ((word >> 0xc) > 6) { bytecount -= 10; continue; }
+        if ((word >> 0xc) == 0) { bytecount -= 10; continue; }
+        if ((word & 0xf) != 0) { bytecount -= 10; continue; }
 
-        // check for valid palette address
+        // check for valid palette address (7)
         make_word();
-        if ((word & 1) != 0 ) { continue; }
+        if ((word & 0xf) != 0 ) { bytecount -= 12; continue; }
 
-        // grab palette address major - highest value should be < 0xFF80
+        // grab palette address major - highest value should be < 0xFF80 (8)
         make_word();
-        if (word < 0xff80) { continue; }
+        if ((word & 0xffff) < 0xff80) { bytecount -= 14; continue; }
 
         // build address and check if the value is a valid palette size
         var pal_loc = ((header[8] << 16 | header[7]) / 8) & 0xfffff;
         var size = Globals.PRG[pal_loc] | Globals.PRG[pal_loc + 1];
-        if (size > 0x40) { continue; }
+        if (size > 0xFF) { bytecount -= 14; continue; }
 
-        // build string
-        string line = $"{address:X5}|{header[0]:X4}|{header[1]:X4}|{header[2]:X4}|{header[3]:X4}" +
-            $"|{header[5]:X4}{header[4]:X4}|{header[6]:X4}|{header[8]:X4}{header[7]:X4}";
+        // build string 0x7dc88
+        string line = $"{address:X5}|{(short)header[0]:X4}|{(short)header[1]:X4}|{(short)header[2]:X4}|{(short)header[3]:X4}" +
+            $"|{(short)header[5]:X4}{(short)header[4]:X4}|{(short)header[6]:X4}|{(short)header[8]:X4}{(short)header[7]:X4}";
 
-        // print(line)	
         writer.WriteLine(line);
         Console.WriteLine(line);
 
         void make_word()
         {
-            word = Globals.PRG[bytecount] << 8 | Globals.PRG[bytecount + 1];
+            word = (short)(Globals.PRG[bytecount] << 8 | Globals.PRG[bytecount + 1]);
             header.Add(word);
             bytecount += 2;
         }
@@ -275,6 +294,14 @@ static void Extract_Animations()
     if (!GFX_Check()) { return; }
     Extract.Animations();
     Console.WriteLine("\n ANIMATIONS DONE!");
+    Thread.Sleep(200);
+}
+
+static void Extract_Sprite_Lists()
+{
+    if (!GFX_Check()) { return; }
+    Extract.Sprite_List();
+    Console.WriteLine("\n SPRITE LISTS DONE!");
     Thread.Sleep(200);
 }
 

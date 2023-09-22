@@ -48,21 +48,7 @@ namespace MKII_Asset_Extractor
         /// <returns></returns>
         public static short Get_Word(int rom_loc)
         {
-
-            // convert the address if format was given as game address
-            if (rom_loc > 0xfffff)
-            {
-                rom_loc = (rom_loc / 8) & 0xfffff;
-            }
-
             short value = (short)(Globals.PRG[rom_loc] << 8 | Globals.PRG[rom_loc + 1]);
-
-            //if (value > 0x7fff)
-            //{
-                // turn into negative
-            //    value -= 0x10000;
-            //}
-
             return value;
         }
 
@@ -73,12 +59,6 @@ namespace MKII_Asset_Extractor
         /// <returns></returns>
         public static uint Get_Long(int rom_loc)
         {
-            // convert the address if format was given as game address.
-            if (rom_loc > 0xfffff)
-            {
-                rom_loc = (rom_loc / 8) & 0xfffff;
-            }
-
             var word1 = Globals.PRG[rom_loc] << 8 | Globals.PRG[rom_loc + 1];
             var word2 = Globals.PRG[rom_loc + 2] << 8 | Globals.PRG[rom_loc + 3];
             return (uint)((word2 << 16) | word1);
@@ -142,6 +122,11 @@ namespace MKII_Asset_Extractor
 
         public static Header Build_Header(int location)
         {
+            if (location < 0)
+            {
+                location = (location / 8) & 0xfffff;
+            }
+            
             Header header = new Header
             {
                 loc = location,
@@ -227,6 +212,7 @@ namespace MKII_Asset_Extractor
 
         public static SKBitmap Draw_Image(Header header, bool create_palette)
         {
+            
             //var header = Tools.Build_Header(location);
             int location = header.loc;
 
@@ -241,7 +227,7 @@ namespace MKII_Asset_Extractor
                 return null;
             }
 
-            int bpp = (int)(header.draw_att >> 0xc);
+            int bpp = (int)((header.draw_att & 0xffff) >> 0xc);
             uint gfx_start = (uint)((header.gfxloc - (header.gfxloc % 8)) / 8);
             uint gfx_end = (uint)(gfx_start + ((header.width * header.height * bpp) + (header.gfxloc % 8) / 8));
             List<byte> data = Globals.GFX.Skip((int)gfx_start).Take((int)(gfx_end - gfx_start)).ToList();
@@ -254,6 +240,11 @@ namespace MKII_Asset_Extractor
 
             // TRIM STARTING OFFSET
             bits.RemoveRange(0, (int)(header.gfxloc % 8));
+            if (bits.Count == 0)
+            {
+                Console.WriteLine("Problem. GFX bits are empty.");
+                return null;
+            }
 
             // CREATE IMAGE
             return Fill_Pixels((int)header.width, (int)header.height, bits, Globals.PALETTE, (int)header.draw_att);
@@ -286,7 +277,7 @@ namespace MKII_Asset_Extractor
             #endregion
 
             SKBitmap bitmap = new(width, height, SKColorType.Rgba8888, SKAlphaType.Premul);
-            int bpp = draw_att >> 0xc;
+            int bpp = (draw_att & 0xffff) >> 0xc;
             int pixel = 0;
 
             for (int y = 0; y < height; y++)

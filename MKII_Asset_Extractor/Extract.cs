@@ -142,11 +142,27 @@ namespace MKII_Asset_Extractor
             if (!Directory.Exists(Globals.PATH_IMAGES))
                 Directory.CreateDirectory(Globals.PATH_IMAGES);
 
-            List<string> headers = File.ReadAllLines(Globals.FILE_HEADERS).ToList();
+            List<string> lines = File.ReadAllLines(Globals.FILE_HEADERS).ToList();
 
-            foreach (var header in headers)
+            foreach (var line in lines)
             {
-                List<string> members = header.Split("|").ToList();
+                // 2EBD2|0013|001B|0073|005B|05492AC6|6080|FFAE44A0
+                List<string> members = line.Split("|").ToList();
+                Header header = Tools.Build_Header(Convert.ToInt32(members[0], 16));
+                Globals.PALETTE = Converters.Convert_Palette((int)(header.palloc / 8) & 0xfffff);
+                SKBitmap bitmap = Imaging.Draw_Image(header, false);
+
+                // DRAW FRAME
+                if (bitmap != null)
+                {
+                    var image = SKImage.FromBitmap(bitmap);
+                    var data = image.Encode(SKEncodedImageFormat.Png, 100);
+                    File.WriteAllBytes($"{Globals.PATH_IMAGES}/{header.loc}.png", data.ToArray());
+                    //File.WriteAllBytes($"{Path.GetDirectoryName(System.Reflection.Assembly.GetEntryAssembly().Location)}/{Globals.PATH_IMAGES}/{header.loc}.png", data.ToArray());
+                    image.Dispose();
+                    data.Dispose();
+                }
+
             }
         }
 
@@ -884,6 +900,195 @@ namespace MKII_Asset_Extractor
                 end_of_animation:;
                 }
 
+            }
+        }
+
+        static public void Sprite_List()
+        {
+
+            uint[] Portraits = 
+            {
+                // 0x12980 - Portraits (Need Secrets/Bosses)
+                0xffb23640,0xffb235b0,0xffb236d0,0xffb23760,0xffb23520,0xffb23400,0xffb232e0,0xffb23370,
+                0xffb23250,0xffb23880,0xffb237f0,0xffb23490,0xFFFA5120,0xFFFA51B0,0xFFFA5240
+            };
+
+            // 0xfe04 = baby sprites
+            uint[] Babies =
+            {
+                0xffb1ccc0,0xffb1c960,0xffb1c9f0,0xffb1cb10,0xffb1cc30,0xffb1cba0,0xffb1c840,0xffb1c8d0,
+                0xff87f1a0,0xff87f230,0xff87f2c0,0xffb1ca80,0xFFC84000,0xFFC84680,0xFFC84800
+            };
+
+            #region SCORAREA.TBL
+            uint[] SCORAREA =
+            {
+                // 0xffaf3130 palette
+                0xFFA78DA0, // lifebar
+                0xFFA78E30, // insert coin
+                0xFFA78EC0, // push start
+                0xFFA78F30, // shad wins
+                0xFFA78FA0, // shad num1
+                0xFFA79010, // shad num2
+                0xFFA79080, // shad num3
+                0xFFA790F0, // shad num4
+                0xFFA79160, // shad num5
+                0xFFA791D0, // shad num6
+                0xFFA79240, // shad num7
+                0xFFA792B0, // shad num8
+                0xFFA79320, // shad num9
+                0xFFA79390, // shad num0
+                
+                // 0x0c90 - Lifebar Name Plates
+                0xffa79c50,0xffa79400,0xffa796a0,0xffa79be0,0xffa79b70,0xffa79e80,0xffa79630,0xffa795c0,
+                0xffa794e0,0xffa79550,0xffa79470,0xffa79e10,0xffa79ef0,0xffa79d30,0xffa79cc0,0xffa79f60,
+                0xff806d00
+            };
+            #endregion
+
+            #region MKBLOOD.TBL
+            // table @ 0x34b90
+            uint[] Blood_Fatality =
+            {
+                // 0xffaf2930 palette
+                0xFFBE86C0,0xFFBE8750,0xFFBE87E0,0xFFBE8850,0xFFBE88C0,0xFFBE8930,0xFFBE89A0,0xFFBE8A10,
+                0xFFBE8A80,0xFFBE8AF0,0xFFBE8B60,0xFFBE8BD0,0xFFBE8C40,0xFFBE8CB0,0xFFBE8D20,0xFFBE8D90,
+                0xFFBE8E00,0xFFBE8E70,0xFFBE8EE0,0xFFBE8F50,0xFFBE8FC0
+            };
+
+            uint[] Blood_Stab =
+            {
+                // 0xffaf2a40 palette
+                0xFFBE9030,0xFFBE90C0,0xFFBE9150,0xFFBE91C0,0xFFBE9230,0xFFBE92A0,0xFFBE9310,0xFFBE9380,
+                0xFFBE93F0,0xFFBE9460,0xFFBE94D0,0xFFBE9540,0xFFBE95B0,0xFFBE9620,0xFFBE9690,0xFFBE9700,
+                0xFFBE9770,0xFFBE97E0,0xFFBE9850,0xFFBE98C0,0xFFBE9930,0xFFBE99A0,0xFFBE9A10,0xFFBE9A80,
+                0xFFBE9AF0,0xFFBE9B60,0xFFBE9BD0,0xFFBE9C40,0xFFBE9CB0,0xFFBE9D20,0xFFBE9D90,0xFFBE9E00,
+                0xFFBE9E70,0xFFBE9EE0,0xFFBE9F50,0xFFBE9FC0,0xFFBEA030,0xFFBEA0A0,0xFFBEA110,0xFFBEA180,
+                0xFFBEA1F0,0xFFBEA260,0xFFBEA2D0,0xFFBEA340,0xFFBEA3B0,0xFFBEA420,0xFFBEA490,0xFFBEA500,
+                0xFFBEA570,0xFFBEA5E0,0xFFBEA650,0xFFBEA6C0,0xFFBEA730,0xFFBEA7A0,0xFFBEA810,0xFFBEA880,
+                0xFFBEA8F0,0xFFBEA960,0xFFBEA9D0,0xFFBEAA40,0xFFBEAAB0,0xFFBEAB20,0xFFBEAB90,0xFFBEAC00,
+                0xFFBEAC70,0xFFBEACE0,0xFFBEAD50,0xFFBEADC0,0xFFBEAE30,0xFFBEAEA0,0xFFBEAF10,0xFFBEAF80,
+                0xFFBEAFF0,
+                
+                // spill
+                0xFFBEB060,0xFFBEB0F0,0xFFBEB160,0xFFBEB1D0,0xFFBEB240,0xFFBEB2B0,0xFFBEB320,0xFFBEB390,
+                0xFFBEB400,0xFFBEB470,0xFFBEB4E0,0xFFBEB550,0xFFBEB5C0,0xFFBEB630,0xFFBEB6A0,0xFFBEB710,
+                0xFFBEB780,0xFFBEB7F0,0xFFBEB860,0xFFBEB8D0,0xFFBEB940,0xFFBEB9B0,0xFFBEBA20,0xFFBEBA90,
+                0xFFBEBB00,0xFFBEBB70,0xFFBEBBE0,0xFFBEBC50,0xFFBEBCC0,0xFFBEBD30,0xFFBEBDA0,0xFFBEBE10,
+                0xFFBEBE80,0xFFBEBEF0,0xFFBEBF60,0xFFBEBFD0,0xFFBEC040,0xFFBEC0B0,0xFFBEC120,0xFFBEC190,
+                0xFFBEC200
+            };
+
+            uint[] Blood_Big =
+            {
+                // 0xffaf2b40 palette
+                0xFFBEC270,0xFFBEC300,0xFFBEC370,0xFFBEC3E0,0xFFBEC450,0xFFBEC4C0,0xFFBEC530,0xFFBEC5A0,
+                0xFFBEC610,0xFFBEC680,0xFFBEC6F0,0xFFBEC760,0xFFBEC7D0,0xFFBEC840,0xFFBEC8B0,0xFFBEC920,
+                0xFFBEC990,0xFFBECA00,0xFFBECA70,0xFFBECAE0,0xFFBECB50,0xFFBECBC0,0xFFBECC30,0xFFBECCA0,
+                0xFFBECD10,0xFFBECD80,0xFFBECDF0,0xFFBECE60,0xFFBECED0,0xFFBECF40,0xFFBECFB0,0xFFBED020,
+                0xFFBED090,0xFFBED100,0xFFBED170,0xFFBED1E0,0xFFBED250,0xFFBED2C0,0xFFBED330,0xFFBED3A0,
+                0xFFBED410,0xFFBED480,0xFFBED4F0,0xFFBED560
+            };
+
+            uint[] Blood_Mid_Pr =
+            {
+                0xFFBED5D0
+            };
+            #endregion
+
+            // draw sprites from header location (must include palette in header)
+            Create_Sprite_From_Location_Array(Portraits, nameof(Portraits), false);
+            Create_Sprite_From_Location_Array(Babies, nameof(Babies), false);
+            Create_Sprite_From_Location_Array(Blood_Fatality, nameof(Blood_Fatality), true);
+            Create_Sprite_From_Location_Array(Blood_Stab, nameof(Blood_Stab), true);
+            Create_Sprite_From_Location_Array(Blood_Big, nameof(Blood_Big), true);
+            Create_Sprite_From_Location_Array(Blood_Mid_Pr, nameof(Blood_Mid_Pr), true);
+            Create_Sprite_From_Location_Array(SCORAREA, nameof(SCORAREA), true);
+
+
+        }
+
+        static void Create_Sprite_From_Location_Array(uint[] uints, string folder_name, bool share_palette)
+        {
+            Console.WriteLine($"\nExtracting {folder_name}...");
+
+            // set directory
+            folder_name = $"{Globals.PATH_IMAGES}{folder_name}/";
+            
+            // get parent header and create parent palette
+            int rom_loc = (int)((uints[0] / 8) & 0xfffff);
+            Header header = Tools.Build_Header(rom_loc);
+            Globals.PALETTE = Converters.Convert_Palette((int)(header.palloc / 8) & 0xfffff);
+
+            foreach (var loc in uints)
+            {
+                rom_loc = (int)((loc / 8) & 0xfffff);
+               
+                header = Tools.Build_Header(rom_loc);
+                if(share_palette == false)
+                {
+                    Globals.PALETTE = Converters.Convert_Palette((int)(header.palloc / 8) & 0xfffff);
+                }
+                SKBitmap bitmap = Imaging.Draw_Image(header, false);
+
+                // DRAW FRAME
+                if (bitmap != null)
+                {
+                    var image = SKImage.FromBitmap(bitmap);
+                    var data = image.Encode(SKEncodedImageFormat.Png, 100);
+                    
+                    if(!Directory.Exists(folder_name))
+                        Directory.CreateDirectory(folder_name);
+
+                    File.WriteAllBytes($"{folder_name}{header.loc}.png", data.ToArray());
+                    image.Dispose();
+                    data.Dispose();
+                }
+            }
+        }
+
+        static void Create_Sprites_From_Parent(uint parent_loc, int children, string folder_name)
+        {
+            Console.WriteLine($"\nExtracting {folder_name}...");
+
+            // set directory
+            folder_name = $"{Globals.PATH_IMAGES}{folder_name}/";
+
+            // get parent header and draw it
+            int rom_loc = (int)((parent_loc / 8) & 0xfffff);
+            Header header = Tools.Build_Header(rom_loc);
+            Globals.PALETTE = Converters.Convert_Palette((int)(header.palloc / 8) & 0xfffff);
+            SKBitmap bitmap = Imaging.Draw_Image(header, false);
+            if (bitmap != null)
+            {
+                var image = SKImage.FromBitmap(bitmap);
+                var data = image.Encode(SKEncodedImageFormat.Png, 100);
+
+                if (!Directory.Exists(folder_name))
+                    Directory.CreateDirectory(folder_name);
+
+                File.WriteAllBytes($"{folder_name}{header.loc}.png", data.ToArray());
+                image.Dispose();
+                data.Dispose();
+            }
+
+            for (int i = 0; i < children; i++)
+            {
+                // find location of next child
+                header = Tools.Build_Header((int)(i *14 + parent_loc + 18));
+                bitmap = Imaging.Draw_Image(header, false);
+                if (bitmap != null)
+                {
+                    var image = SKImage.FromBitmap(bitmap);
+                    var data = image.Encode(SKEncodedImageFormat.Png, 100);
+
+                    if (!Directory.Exists(folder_name))
+                        Directory.CreateDirectory(folder_name);
+
+                    File.WriteAllBytes($"{folder_name}{header.loc}.png", data.ToArray());
+                    image.Dispose();
+                    data.Dispose();
+                }
             }
         }
 
