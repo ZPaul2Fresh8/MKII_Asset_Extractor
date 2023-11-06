@@ -69,6 +69,12 @@ while (true)
             ListOptions();
             break;
 
+        case (char)ConsoleKey.P:
+            Console.WriteLine("\nExtracting Assets From Source...");
+            Extract2.ReadHeadersIntoMemory(Extract2.ReadPalettesIntoMemory());
+            ListOptions();
+            break;
+
         case (char)ConsoleKey.Escape:
             Console.WriteLine("Exiting...");
             return; // Exit the program
@@ -227,7 +233,7 @@ static void ExtractImageHeaders()
         // check draw attribute criteria
         make_word();
         word = (short)(word & 0xffff);
-        if ((word >> 0xc) > 6) { bytecount -= 10; continue; }
+        if ((word >> 0xc) > 8) { bytecount -= 10; continue; }
         if ((word >> 0xc) == 0) { bytecount -= 10; continue; }
         if ((word & 0xf) != 0) { bytecount -= 10; continue; }
 

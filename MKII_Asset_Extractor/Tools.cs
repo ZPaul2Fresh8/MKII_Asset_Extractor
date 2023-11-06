@@ -7,6 +7,7 @@ using System.Text;
 using System.Threading.Tasks;
 using static System.Net.Mime.MediaTypeNames;
 using System.Diagnostics;
+using System.Diagnostics.Contracts;
 
 namespace MKII_Asset_Extractor
 {
@@ -90,6 +91,78 @@ namespace MKII_Asset_Extractor
                     
             }
             return bits;
+        }
+
+        // reverse bytes to comply
+        public static List<byte> reverse_bytes(List<byte> bytes)
+        {
+            var bytelist = new List<byte>();
+
+            // trim last byte if uneven
+            if ((bytes.Count & 1) != 0) bytes.RemoveAt(bytes.Count - 1);
+
+            for (int b = 0; b < bytes.Count / 2; b += 2)
+            {
+                bytelist.Add(bytes[b + 1]); bytelist.Add(bytes[b]);
+            }
+            return bytelist;
+
+        }
+
+        public static List<bool> ConvertBytesToBoolArray(List<byte> bytes)
+        {
+            var bools = new List<bool>();
+
+            foreach (byte b in bytes)
+            {
+                bools.AddRange(ByteToBoolArray(b));
+            }
+            return bools;
+        }
+
+        public static bool[] ByteToBoolArray(byte b)
+        {
+            // prepare the return result
+            bool[] result = new bool[8];
+
+            // check each bit in the byte. if 1 set to true, if 0 set to false
+            for (int i = 0; i < 8; i++)
+                result[i] = (b & (1 << i)) != 0;
+
+            // reverse the array
+            //Array.Reverse(result);
+
+            return result;
+        }
+
+        public static byte BoolArrayToByte(bool[] bools)
+        {
+            byte result = 0;
+            Array.Reverse(bools);
+
+            // This assumes the array never contains more than 8 elements!
+            int index = 8 - bools.Length;
+
+            // Loop through the array
+            foreach (bool b in bools)
+            {
+                // if the element is 'true' set the bit at that position
+                if (b)
+                    result |= (byte)(1 << (7 - index));
+
+                index++;
+            }
+            return result;
+        }
+
+        public static uint RotateLeft(this uint value, int count)
+        {
+            return (value << count) | (value >> (32 - count));
+        }
+
+        public static uint RotateRight(this uint value, int count)
+        {
+            return (value >> count) | (value << (32 - count));
         }
 
         /// <summary>
@@ -339,7 +412,7 @@ namespace MKII_Asset_Extractor
                     {
                         // PIXEL IS COMPRESSED, SET TRANSPARENT
                         // DEBUG SHOW COMPRESSED PIXELS
-                        //bitmap.SetPixel(x, y, SKColors.Green);
+                        // bitmap.SetPixel(x, y, SKColors.Green);
                         index = 0;
                         continue;
                     }
@@ -417,7 +490,12 @@ namespace MKII_Asset_Extractor
 
     public static class Converters
     {
-        public static List<SKColor> Convert_Palette(int pal_loc)
+        /// <summary>
+        /// Given a palette location, it will return a list of colors.
+        /// </summary>
+        /// <param name="Palette Location"></param>
+        /// <returns></returns>
+        public static List<SKColor>Convert_Palette(int pal_loc)
         {
             var palette = new List<SKColor>();
             int size = Tools.Get_Word(pal_loc);
@@ -425,19 +503,56 @@ namespace MKII_Asset_Extractor
 
             for (int c = 0; c < size*2; c+=2)
             {
-                if(c==0)
+                // if color index == 0 and color is 0x0000 then make it transparent
+                if (c == 0)
                 {
-                    palette.Add(SKColors.Transparent);
-                    continue;
+                    // Some sprites have a color that isn't 0 and should be transparent!
+                    //if (Tools.Get_Word(pal_loc + 2 + c) == 0)
+                    {
+                        palette.Add(SKColors.Transparent);
+                        continue;
+                    }
                 }
-                
+
                 int word = Tools.Get_Word(pal_loc + 2 + c);
                 palette.Add(Convert_Color(word));
             }
             return palette;
         }
 
-        static SKColor Convert_Color(int color_555)
+        /// <summary>
+        /// Given a list of bytes, it will return a list of colors and remove those bytes
+        /// from the list provided.
+        /// </summary>
+        /// <param name="chunk"></param>
+        /// <returns></returns>
+        public static Tuple<List<SKColor>, List<byte>> Convert_Palette(List<byte> chunk)
+        {
+            var palette = new List<SKColor>();
+            int size = (chunk[0] << 8 | chunk[1]) *2; chunk.RemoveRange(0, 2);
+            var slice = chunk.Take(size).ToList(); chunk.RemoveRange(0, slice.Count);
+
+            for (int c = 0; c < size; c += 2)
+            {
+                // if color index == 0 and color is 0x0000 then make it transparent
+                if (c == 0)
+                {
+                    if ((slice[0] << 8 | slice[1]) == 0)
+                    {
+                        palette.Add(SKColors.Transparent);
+                        slice.RemoveRange(0, 2);
+                        continue;
+                    }
+                }
+
+                int color = slice[0] << 8 | slice[1];
+                slice.RemoveRange(0, 2);
+                palette.Add(Convert_Color(color));
+            }
+            return Tuple.Create(palette, chunk);
+        }
+
+        public static SKColor Convert_Color(int color_555)
         {
             int red = (color_555 >> 10) & 0x1f;
             int green = (color_555 >> 5) & 0x1f;

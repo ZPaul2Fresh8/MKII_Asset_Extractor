@@ -1,14 +1,14 @@
 {
   "version": 2,
-  "dgSpecHash": "MVwFdHFPGN/vDZaMQYOZ7Do1bOWTyd6PQcGYmesOhLVX396Zmmn1jNVTHG/W1hU0SZSMnrBC+PStCC9fAjDEsg==",
+  "dgSpecHash": "DuW284zVKf2tjPJsaiw5uRh8dma2fkPFpbCrYJwjqsuyVo6C0Ir5u9IndrhCciTEb2uyboelIklWxOUs2VsPyA==",
   "success": true,
-  "projectFilePath": "C:\\Users\\paule\\source\\repos\\MKII_Asset_Extractor\\MKII_Asset_Extractor\\MKII_Asset_Extractor.csproj",
+  "projectFilePath": "C:\\Users\\zpaul\\Documents\\C#\\repos\\MKII_Asset_Extractor\\MKII_Asset_Extractor\\MKII_Asset_Extractor.csproj",
   "expectedPackageFiles": [
-    "C:\\Users\\paule\\.nuget\\packages\\microsoft.win32.systemevents\\7.0.0\\microsoft.win32.systemevents.7.0.0.nupkg.sha512",
-    "C:\\Users\\paule\\.nuget\\packages\\skiasharp\\2.88.3\\skiasharp.2.88.3.nupkg.sha512",
-    "C:\\Users\\paule\\.nuget\\packages\\skiasharp.nativeassets.macos\\2.88.3\\skiasharp.nativeassets.macos.2.88.3.nupkg.sha512",
-    "C:\\Users\\paule\\.nuget\\packages\\skiasharp.nativeassets.win32\\2.88.3\\skiasharp.nativeassets.win32.2.88.3.nupkg.sha512",
-    "C:\\Users\\paule\\.nuget\\packages\\system.drawing.common\\7.0.0\\system.drawing.common.7.0.0.nupkg.sha512"
+    "C:\\Users\\zpaul\\.nuget\\packages\\microsoft.win32.systemevents\\7.0.0\\microsoft.win32.systemevents.7.0.0.nupkg.sha512",
+    "C:\\Users\\zpaul\\.nuget\\packages\\skiasharp\\2.88.6\\skiasharp.2.88.6.nupkg.sha512",
+    "C:\\Users\\zpaul\\.nuget\\packages\\skiasharp.nativeassets.macos\\2.88.6\\skiasharp.nativeassets.macos.2.88.6.nupkg.sha512",
+    "C:\\Users\\zpaul\\.nuget\\packages\\skiasharp.nativeassets.win32\\2.88.6\\skiasharp.nativeassets.win32.2.88.6.nupkg.sha512",
+    "C:\\Users\\zpaul\\.nuget\\packages\\system.drawing.common\\7.0.0\\system.drawing.common.7.0.0.nupkg.sha512"
   ],
   "logs": []
 }

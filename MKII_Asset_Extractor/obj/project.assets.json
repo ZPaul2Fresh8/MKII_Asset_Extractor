@@ -24,11 +24,11 @@
           }
         }
       },
-      "SkiaSharp/2.88.3": {
+      "SkiaSharp/2.88.6": {
         "type": "package",
         "dependencies": {
-          "SkiaSharp.NativeAssets.Win32": "2.88.3",
-          "SkiaSharp.NativeAssets.macOS": "2.88.3"
+          "SkiaSharp.NativeAssets.Win32": "2.88.6",
+          "SkiaSharp.NativeAssets.macOS": "2.88.6"
         },
         "compile": {
           "lib/net6.0/SkiaSharp.dll": {
@@ -41,13 +41,13 @@
           }
         }
       },
-      "SkiaSharp.NativeAssets.macOS/2.88.3": {
+      "SkiaSharp.NativeAssets.macOS/2.88.6": {
         "type": "package",
         "compile": {
-          "lib/net5.0/_._": {}
+          "lib/net6.0/_._": {}
         },
         "runtime": {
-          "lib/net5.0/_._": {}
+          "lib/net6.0/_._": {}
         },
         "runtimeTargets": {
           "runtimes/osx/native/libSkiaSharp.dylib": {
@@ -56,13 +56,13 @@
           }
         }
       },
-      "SkiaSharp.NativeAssets.Win32/2.88.3": {
+      "SkiaSharp.NativeAssets.Win32/2.88.6": {
         "type": "package",
         "compile": {
-          "lib/net5.0/_._": {}
+          "lib/net6.0/_._": {}
         },
         "runtime": {
-          "lib/net5.0/_._": {}
+          "lib/net6.0/_._": {}
         },
         "runtimeTargets": {
           "runtimes/win-arm64/native/libSkiaSharp.dll": {
@@ -138,10 +138,10 @@
         "useSharedDesignerContext.txt"
       ]
     },
-    "SkiaSharp/2.88.3": {
-      "sha512": "GG8X3EdfwyBfwjl639UIiOVOKEdeoqDgYrz0P1MUCnefXt9cofN+AK8YB/v1+5cLMr03ieWCQdDmPqnFIzSxZw==",
+    "SkiaSharp/2.88.6": {
+      "sha512": "wdfeBAQrEQCbJIRgAiargzP1Uy+0grZiG4CSgBnhAgcJTsPzlifIaO73JRdwIlT3TyBoeU9jEqzwFUhl4hTYnQ==",
       "type": "package",
-      "path": "skiasharp/2.88.3",
+      "path": "skiasharp/2.88.6",
       "files": [
         ".nupkg.metadata",
         ".signature.p7s",
@@ -154,9 +154,6 @@
         "lib/net462/SkiaSharp.dll",
         "lib/net462/SkiaSharp.pdb",
         "lib/net462/SkiaSharp.xml",
-        "lib/net5.0/SkiaSharp.dll",
-        "lib/net5.0/SkiaSharp.pdb",
-        "lib/net5.0/SkiaSharp.xml",
         "lib/net6.0-android30.0/SkiaSharp.dll",
         "lib/net6.0-android30.0/SkiaSharp.pdb",
         "lib/net6.0-android30.0/SkiaSharp.xml",
@@ -211,14 +208,14 @@
         "lib/xamarinwatchos1.0/SkiaSharp.dll",
         "lib/xamarinwatchos1.0/SkiaSharp.pdb",
         "lib/xamarinwatchos1.0/SkiaSharp.xml",
-        "skiasharp.2.88.3.nupkg.sha512",
+        "skiasharp.2.88.6.nupkg.sha512",
         "skiasharp.nuspec"
       ]
     },
-    "SkiaSharp.NativeAssets.macOS/2.88.3": {
-      "sha512": "CEbWAXMGFkPV3S1snBKK7jEG3+xud/9kmSAhu0BEUKKtlMdxx+Qal0U9bntQREM9QpqP5xLWZooodi8IlV8MEg==",
+    "SkiaSharp.NativeAssets.macOS/2.88.6": {
+      "sha512": "Sko9LFxRXSjb3OGh5/RxrVRXxYo48tr5NKuuSy6jB85GrYt8WRqVY1iLOLwtjPiVAt4cp+pyD4i30azanS64dw==",
       "type": "package",
-      "path": "skiasharp.nativeassets.macos/2.88.3",
+      "path": "skiasharp.nativeassets.macos/2.88.6",
       "files": [
         ".nupkg.metadata",
         ".signature.p7s",
@@ -231,20 +228,20 @@
         "buildTransitive/net6.0-macos10.15/SkiaSharp.NativeAssets.macOS.targets",
         "buildTransitive/xamarinmac2.0/SkiaSharp.NativeAssets.macOS.targets",
         "lib/net462/_._",
-        "lib/net5.0/_._",
         "lib/net6.0-macos10.15/_._",
+        "lib/net6.0/_._",
         "lib/netcoreapp3.1/_._",
         "lib/netstandard1.3/_._",
         "lib/xamarinmac2.0/_._",
         "runtimes/osx/native/libSkiaSharp.dylib",
-        "skiasharp.nativeassets.macos.2.88.3.nupkg.sha512",
+        "skiasharp.nativeassets.macos.2.88.6.nupkg.sha512",
         "skiasharp.nativeassets.macos.nuspec"
       ]
     },
-    "SkiaSharp.NativeAssets.Win32/2.88.3": {
-      "sha512": "MU4ASL8VAbTv5vSw1PoiWjjjpjtGhWtFYuJnrN4sNHFCePb2ohQij9JhSdqLLxk7RpRtWPdV93fbA53Pt+J0yw==",
+    "SkiaSharp.NativeAssets.Win32/2.88.6": {
+      "sha512": "7TzFO0u/g2MpQsTty4fyCDdMcfcWI+aLswwfnYXr3gtNS6VLKdMXPMeKpJa3pJSLnUBN6wD0JjuCe8OoLBQ6cQ==",
       "type": "package",
-      "path": "skiasharp.nativeassets.win32/2.88.3",
+      "path": "skiasharp.nativeassets.win32/2.88.6",
       "files": [
         ".nupkg.metadata",
         ".signature.p7s",
@@ -253,13 +250,13 @@
         "build/net462/SkiaSharp.NativeAssets.Win32.targets",
         "buildTransitive/net462/SkiaSharp.NativeAssets.Win32.targets",
         "lib/net462/_._",
-        "lib/net5.0/_._",
+        "lib/net6.0/_._",
         "lib/netcoreapp3.1/_._",
         "lib/netstandard1.3/_._",
         "runtimes/win-arm64/native/libSkiaSharp.dll",
         "runtimes/win-x64/native/libSkiaSharp.dll",
         "runtimes/win-x86/native/libSkiaSharp.dll",
-        "skiasharp.nativeassets.win32.2.88.3.nupkg.sha512",
+        "skiasharp.nativeassets.win32.2.88.6.nupkg.sha512",
         "skiasharp.nativeassets.win32.nuspec"
       ]
     },
@@ -303,33 +300,25 @@
   },
   "projectFileDependencyGroups": {
     "net6.0": [
-      "SkiaSharp >= 2.88.3",
+      "SkiaSharp >= 2.88.6",
       "System.Drawing.Common >= 7.0.0"
     ]
   },
   "packageFolders": {
-    "C:\\Users\\paule\\.nuget\\packages\\": {},
-    "C:\\Users\\paule\\AppData\\Roaming\\Godot\\mono\\GodotNuGetFallbackFolder": {},
-    "C:\\Program Files (x86)\\Microsoft\\Xamarin\\NuGet\\": {}
+    "C:\\Users\\zpaul\\.nuget\\packages\\": {}
   },
   "project": {
     "version": "1.0.0",
     "restore": {
-      "projectUniqueName": "C:\\Users\\paule\\source\\repos\\MKII_Asset_Extractor\\MKII_Asset_Extractor\\MKII_Asset_Extractor.csproj",
+      "projectUniqueName": "C:\\Users\\zpaul\\Documents\\C#\\repos\\MKII_Asset_Extractor\\MKII_Asset_Extractor\\MKII_Asset_Extractor.csproj",
       "projectName": "MKII_Asset_Extractor",
-      "projectPath": "C:\\Users\\paule\\source\\repos\\MKII_Asset_Extractor\\MKII_Asset_Extractor\\MKII_Asset_Extractor.csproj",
-      "packagesPath": "C:\\Users\\paule\\.nuget\\packages\\",
-      "outputPath": "C:\\Users\\paule\\source\\repos\\MKII_Asset_Extractor\\MKII_Asset_Extractor\\obj\\",
+      "projectPath": "C:\\Users\\zpaul\\Documents\\C#\\repos\\MKII_Asset_Extractor\\MKII_Asset_Extractor\\MKII_Asset_Extractor.csproj",
+      "packagesPath": "C:\\Users\\zpaul\\.nuget\\packages\\",
+      "outputPath": "C:\\Users\\zpaul\\Documents\\C#\\repos\\MKII_Asset_Extractor\\MKII_Asset_Extractor\\obj\\",
       "projectStyle": "PackageReference",
-      "fallbackFolders": [
-        "C:\\Users\\paule\\AppData\\Roaming\\Godot\\mono\\GodotNuGetFallbackFolder",
-        "C:\\Program Files (x86)\\Microsoft\\Xamarin\\NuGet\\"
-      ],
       "configFilePaths": [
-        "C:\\Users\\paule\\AppData\\Roaming\\NuGet\\NuGet.Config",
-        "C:\\Users\\paule\\AppData\\Roaming\\NuGet\\config\\Godot.Offline.Config",
-        "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.Offline.config",
-        "C:\\Program Files (x86)\\NuGet\\Config\\Xamarin.Offline.config"
+        "C:\\Users\\zpaul\\AppData\\Roaming\\NuGet\\NuGet.Config",
+        "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.Offline.config"
       ],
       "originalTargetFrameworks": [
         "net6.0"
@@ -356,7 +345,7 @@
         "dependencies": {
           "SkiaSharp": {
             "target": "Package",
-            "version": "[2.88.3, )"
+            "version": "[2.88.6, )"
           },
           "System.Drawing.Common": {
             "target": "Package",
@@ -379,7 +368,7 @@
             "privateAssets": "all"
           }
         },
-        "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\7.0.102\\RuntimeIdentifierGraph.json"
+        "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\7.0.401\\RuntimeIdentifierGraph.json"
       }
     }
   }

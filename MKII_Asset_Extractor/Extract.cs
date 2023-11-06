@@ -1,11 +1,18 @@
 ﻿using SkiaSharp;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Drawing;
 using System.Linq;
+using System.Net;
+using System.Numerics;
+using System.Reflection.Emit;
 using System.Reflection.PortableExecutable;
+using System.Security.Cryptography;
 using System.Text;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
+using System.Transactions;
 using static System.Net.Mime.MediaTypeNames;
 
 namespace MKII_Asset_Extractor
@@ -920,8 +927,14 @@ namespace MKII_Asset_Extractor
                 0xff87f1a0,0xff87f230,0xff87f2c0,0xffb1ca80,0xFFC84000,0xFFC84680,0xFFC84800
             };
 
+            uint[] Misc =
+            {
+                0xFFFE0D00 // victor
+
+            };
+
             #region SCORAREA.TBL
-            uint[] SCORAREA =
+            uint[] UI =
             {
                 // 0xffaf3130 palette
                 0xFFA78DA0, // lifebar
@@ -938,17 +951,64 @@ namespace MKII_Asset_Extractor
                 0xFFA792B0, // shad num8
                 0xFFA79320, // shad num9
                 0xFFA79390, // shad num0
-                
-                // 0x0c90 - Lifebar Name Plates
-                0xffa79c50,0xffa79400,0xffa796a0,0xffa79be0,0xffa79b70,0xffa79e80,0xffa79630,0xffa795c0,
-                0xffa794e0,0xffa79550,0xffa79470,0xffa79e10,0xffa79ef0,0xffa79d30,0xffa79cc0,0xffa79f60,
-                0xff806d00
+                0xffa79400, // bar kang
+                0xffa79470, // bar scorpion
+                0xffa794e0, // bar subzero
+                0xffa79550, // bar reptile
+                0xffa795c0, // bar raiden
+                0xffa79630, // bar shang
+                0xffa796a0, // bar cage
+                0xFFA79710, // redfont0
+                0xFFA79780, // redfont1
+                0xFFA797F0, // redfont2
+                0xFFA79860, // redfont3
+                0xFFA798D0, // redfont4
+                0xFFA79940, // redfont5
+                0xFFA799B0, // redfont6
+                0xFFA79A20, // redfont7
+                0xFFA79A90, // redfont8
+                0xFFA79B00, // redfont9
+                0xffa79b70, // bar kitana
+                0xffa79be0, // bar baraka
+                0xffa79c50, // bar kung lao
+                0xffa79cc0, // bar smoke
+                0xffa79d30, // bar shao kahn
+                0xFFA79DA0, // mkmedal2
+                0xffa79e10, // bar jax
+                0xffa79e80, // bar mileena
+                0xffa79ef0, // bar kintaro
+                0xFFA79F60, // bar noob
+                0xFFA79FD0, // bar saibot
+                0xFFFE0C00, // bar jade
+                0xFFFE0E00, // bar hornbuckle
+                0xFFFE0E80, // bar chameleon
             };
+
+            uint[] Badge =
+            {
+                0xFFA7A040, // badge2
+            };
+            
+            uint[] Battle =
+            {
+                0xFFA7A0D0, // battle
+                0xFFA7A160, // battle1
+                0xFFA7A1D0, // battle2
+                0xFFA7A240, // battle3
+                0xFFA7A2B0, // battle4
+                0xFFA7A320, // battle5
+                0xFFA7A390, // battle6
+                0xFFA7A400, // battle7
+                0xFFA7A470, // battle8
+                0xFFA7A4E0, // battle9
+                0xFFA7A550, // battle0
+            };
+
             #endregion
 
             #region MKBLOOD.TBL
             // table @ 0x34b90
-            uint[] Blood_Fatality =
+            uint[] Fatality =
             {
                 // 0xffaf2930 palette
                 0xFFBE86C0,0xFFBE8750,0xFFBE87E0,0xFFBE8850,0xFFBE88C0,0xFFBE8930,0xFFBE89A0,0xFFBE8A10,
@@ -956,7 +1016,7 @@ namespace MKII_Asset_Extractor
                 0xFFBE8E00,0xFFBE8E70,0xFFBE8EE0,0xFFBE8F50,0xFFBE8FC0
             };
 
-            uint[] Blood_Stab =
+            uint[] Stab =
             {
                 // 0xffaf2a40 palette
                 0xFFBE9030,0xFFBE90C0,0xFFBE9150,0xFFBE91C0,0xFFBE9230,0xFFBE92A0,0xFFBE9310,0xFFBE9380,
@@ -979,7 +1039,7 @@ namespace MKII_Asset_Extractor
                 0xFFBEC200
             };
 
-            uint[] Blood_Big =
+            uint[] Big =
             {
                 // 0xffaf2b40 palette
                 0xFFBEC270,0xFFBEC300,0xFFBEC370,0xFFBEC3E0,0xFFBEC450,0xFFBEC4C0,0xFFBEC530,0xFFBEC5A0,
@@ -990,20 +1050,53 @@ namespace MKII_Asset_Extractor
                 0xFFBED410,0xFFBED480,0xFFBED4F0,0xFFBED560
             };
 
-            uint[] Blood_Mid_Pr =
+            uint[] Mid_Pr =
             {
                 0xFFBED5D0
             };
+
+            // drip_ani_table
+            uint[] a_rotate_12 =
+            {
+                0xFFBEb630, 0xffbeb6a0, 0xffbeb710
+            };
+
+            uint[] a_rotate_standard =
+            {
+                0xffbeb780, 0xffbeb7f0
+            };
+
+            uint[] a_rotate_9 =
+            {
+                0xffbeb860, 0xffbeb8d0, 0xffbeb940
+            };
+
+            uint[] a_rotate_7 =
+            {
+                0xffbeb9b0, 0xffbeba20, 0xffbeba90, 0xffbebb00
+            };
+
             #endregion
 
             // draw sprites from header location (must include palette in header)
             Create_Sprite_From_Location_Array(Portraits, nameof(Portraits), false);
             Create_Sprite_From_Location_Array(Babies, nameof(Babies), false);
-            Create_Sprite_From_Location_Array(Blood_Fatality, nameof(Blood_Fatality), true);
-            Create_Sprite_From_Location_Array(Blood_Stab, nameof(Blood_Stab), true);
-            Create_Sprite_From_Location_Array(Blood_Big, nameof(Blood_Big), true);
-            Create_Sprite_From_Location_Array(Blood_Mid_Pr, nameof(Blood_Mid_Pr), true);
-            Create_Sprite_From_Location_Array(SCORAREA, nameof(SCORAREA), true);
+            Create_Sprite_From_Location_Array(Misc, nameof(Misc), false);
+            Create_Sprite_From_Location_Array(Fatality, "MKBLOOD/" + nameof(Fatality), true);
+            Create_Sprite_From_Location_Array(Stab, "MKBLOOD/" + nameof(Stab), true);
+            Create_Sprite_From_Location_Array(Big, "MKBLOOD/" + nameof(Big), true);
+            Create_Sprite_From_Location_Array(Mid_Pr, "MKBLOOD/" + nameof(Mid_Pr), true);
+            
+            Create_Sprite_From_Location_Array(a_rotate_12, "MKBLOOD/" + nameof(a_rotate_12), true);
+            Create_Sprite_From_Location_Array(a_rotate_standard, "MKBLOOD/" + nameof(a_rotate_standard), true);
+            Create_Sprite_From_Location_Array(a_rotate_9, "MKBLOOD/" + nameof(a_rotate_9), true);
+            Create_Sprite_From_Location_Array(a_rotate_7, "MKBLOOD/" + nameof(a_rotate_7), true);
+
+            Create_Sprite_From_Location_Array(UI, "SCORAREA/" + nameof(UI), true);
+            Create_Sprite_From_Location_Array(Badge, "SCORAREA/" + nameof(Badge), true);
+            Create_Sprite_From_Location_Array(Battle, "SCORAREA/" + nameof(Battle), true);
+            
+            //Unzip_Images(); <-- WIP
 
 
         }
@@ -1092,6 +1185,385 @@ namespace MKII_Asset_Extractor
             }
         }
 
+        static void Unzip_Images()
+        {
+            uint[] Zips =
+            {
+                0xFFD00000, // revx
+            };
+
+            foreach (uint z in Zips)
+            {
+
+                Unzip_Image(z);
+
+                //Header header = new Header();
+                //header.loc = (int)(z / 8) & 0xfffff;
+                //header.width = Tools.Get_Word(header.loc);
+                //header.height = Tools.Get_Word(header.loc + 2);
+                //header.offsetx = 0;
+                //header.offsety = 0;
+                //header.draw_att = 0x8000;
+                //header.palloc = (uint)header.loc + 6;
+
+                //SKBitmap bitmap = Imaging.Draw_Image(header, true);
+                //if (bitmap != null)
+                //{
+                //    var image = SKImage.FromBitmap(bitmap);
+                //    var data = image.Encode(SKEncodedImageFormat.Png, 100);
+
+                //    if (!Directory.Exists($"{Globals.PATH_IMAGES}Zips/"))
+                //        Directory.CreateDirectory($"{Globals.PATH_IMAGES}Zips/");
+
+                //    File.WriteAllBytes($"{$"{Globals.PATH_IMAGES}Zips/"}{header.loc}.png", data.ToArray());
+                //    image.Dispose();
+                //    data.Dispose();
+                //}
+            }
+
+            
+        }
+
+        static SKBitmap Unzip_Image(uint z)
+        {
+            SKBitmap bitmap = null;
+            int loc=0;
+            List<byte> chunk = new List<byte>();
+            
+            // convert game address and grab chunk of data from
+            // address(z) provided
+            if (z > 0xff800000 && z < 0xffffffff)
+            {
+                loc = (int)(z / 8) & 0xfffff;
+                chunk.AddRange(Globals.PRG.Skip(loc).Take(Tools.Get_Word(loc) * Tools.Get_Word(loc + 2)).ToList());
+            }
+            else
+            {
+                loc = (int)(z / 8) & 0xffffff;
+                chunk.AddRange(Globals.GFX.Skip(loc).Take(Tools.Get_Word(loc) * Tools.Get_Word(loc + 2)).ToList());
+            }
+            
+            int width = chunk[0] << 8 | chunk[1];
+            int height = chunk[2] << 8 | chunk[3];
+            int frames = chunk[4] << 8 | chunk[5];
+            chunk.RemoveRange(0,6);
+
+            // create palette list for frames
+            List<List<SKColor>> frame_pals = new List<List<SKColor>>();
+
+            for (int f = 0; f < frames; f++)
+            {
+                var t = Converters.Convert_Palette(chunk);
+                frame_pals.Add(new List<SKColor>((IEnumerable<SKColor>)t.Item1));
+                chunk = t.Item2;
+            }
+
+            // remove tree data
+            chunk = Tools.reverse_bytes(chunk);
+            List<byte> compression = new List<byte>(chunk.Take(25).ToList());
+            List<int> tree1= new List<int>();
+            List<List<int>> tree2 = new List<List<int>>();
+            chunk.RemoveRange(0, 25);
+
+            Uncompress_Tree();
+
+            // reverse bytes to comply
+            List<bool> bools = Tools.ConvertBytesToBoolArray(chunk);
+
+            List<byte>temp = new List<byte>();
+
+            for (int f = 0; f < frames; f++)
+            {
+                int x = 0;
+                int y = 0;
+
+                while (y < height)
+                {
+
+
+                check_if_encoded:
+                    //var t = get_next_bit(chunk);
+                    var decode = bools[0]; bools.RemoveAt(0);
+
+
+                    // check if decoded needed
+                    if (decode == false)
+                        goto decode_still;
+
+                    // read 8-bits and copy
+                    //bitmap.SetPixel(x, y, frame_pals[f].ElementAt(chunk[0]));
+                    temp.Add(Tools.BoolArrayToByte(bools.Take(8).ToArray()));
+                    bools.RemoveRange(0, 8);
+                    x++;
+
+                    // blow out line if end of row
+                    if (x == width - 1)
+                    {
+
+                        y++;
+                    }
+                    goto check_if_encoded;
+
+                //if bit = 0, decode from trees
+                decode_still:
+                    temp.Add(Tools.BoolArrayToByte(bools.Take(6).ToArray()));
+                    bools.RemoveRange(0, 6);
+
+                }
+            }
+
+            #region unused
+            //for (int f = 0; f < frames; f++)
+            //{
+            //    List<int> indexes = new List<int>();
+            //    int chksum = 0;
+            //    int compressed_bytes = get_next_byte() + 1; // compressed bytes to describe tree - 1
+            //    int A3_And = 0xf;
+            //    int A6_num_of_code_in_tree = 0;
+
+            //    // utr0
+            //    for (int i = 0; i < compressed_bytes; i++)
+            //    {
+            //        int nextbyte = get_next_byte();//;( codes - 1 << 4) | bit lngth - 1
+
+            //        chksum += nextbyte;
+
+            //        int A2_num_of_code_this_length = (nextbyte >> 4) + 1; // number of codes of this bit length
+
+            //        A6_num_of_code_in_tree += A2_num_of_code_this_length;
+            //        nextbyte = nextbyte & A3_And;
+            //        nextbyte++;
+
+            //        int dupes = nextbyte << 16;
+
+            //        // utr1
+            //        for (int c = 0; c < A2_num_of_code_this_length; c++)
+            //        {
+            //            indexes.Add(nextbyte);
+            //        }
+
+            //    }
+
+            //    int A2 = 0;
+            //    compressed_bytes = get_next_byte() + 1; // compressed bytes to describe tree - 1
+
+            //    // chklp
+            //    for (int d = 0; d < compressed_bytes; d++)
+            //    {
+            //        A2 += compressed_bytes;
+            //    }
+
+            //    if(A2 != chksum)
+            //    {
+            //        Console.WriteLine("Checksums don't match...");
+            //    }
+
+            //    //*Sort Tree by increasing Bit Length.
+            //    //* The translation index is placed in the upper byte
+            //    //* of the long word.
+
+
+
+            //    // a quick byte re-arrangement
+            //    int get_next_byte()
+            //    {
+            //        short sh = Tools.Get_Word(cur_pos);
+            //        int temp = 0;
+
+            //        if (Tools.Is_Bit_Set(sh, 0))
+            //        {
+            //            temp = Globals.PRG[cur_pos + 1];
+            //        }
+            //        else
+            //        {
+            //            temp = Globals.PRG[cur_pos - 1];
+            //        }
+
+            //        cur_pos++;
+            //        return temp;
+            //    }
+            //}
+
+
+            //********************************
+            //*Uncompress a single frame
+            //* A0 = Address mask for circular buffer
+            //*A8 = *to compressed data
+            //* A9 = *to buffer for uncompressed bytes
+            //*A11 = How many to place before returning
+            //* B0 = *Length tree
+            //* B1 = *Distance tree
+            //*
+            //*Trashes:
+            //*a1 = Distance
+            //* a2 = ptr to leftover data if there is any
+            //* a4 = Length
+            //*
+            //*ReadTree uses A2-A5,A7,A14,B6
+            //* Need to Preserve: 	B9 - B10
+            // bp ff904a30
+            // if bit = 1, read 8 bits and copy
+            #endregion
+
+            return bitmap;
+
+            void Uncompress_Tree()
+            {
+                // copy table for later use
+                List<byte> temp = compression.ToList();
+
+                int a4 = 0;
+                int a0 = compression[0]; compression.RemoveAt(0);
+                a0 += 1;
+                
+
+                int a3 = 0xf;
+                int a6 = 0;
+
+                // not needed, just makes thing easier
+                int a1 = 0;
+                int a2 = 0;
+                int a11 = 0;
+                int a14 = 0;
+
+                for (int a0i = 0; a0i < a0; a0i++)
+                {
+                    a1 = compression[0]; compression.RemoveAt(0);
+
+                    a4 += a1;
+                    a2 = a1;
+                    a2 >>= 4;
+                    a2++;
+                    a6 += a2;
+                    a1 &= a3;
+                    a1++;
+
+                    a11 = a1;
+                    a11 = a11 << 0x10;
+                    a1 = a11 + a1;
+
+                    for (int a2i = 0; a2i < a2; a2i++)
+                    {
+                        tree1.Add(a1);
+                    }
+                }
+
+                // part 2
+                compression = temp;
+
+                a2 = 0;
+                a0 = compression[0]; compression.RemoveAt(0);
+                a0++;
+
+                for (int a0i = 0; a0i < a0; a0i++)
+                {
+                    a1 = compression[0]; compression.RemoveAt(0);
+                    a2 += a1;
+                }
+
+                // if checksums don't match, throw error
+                if (a2 != a4)
+                    goto error3;
+
+                // a0 = tree2 (0x10b6100)
+                // a7 = tree1 (0x10b2100)
+                int a9 = a6;
+                List<int> A11_tree1 = tree1.ToList();
+
+                for (int a9i = 0; a9i < a9; a9i++)
+                {
+                    // move a5,a7 (reset to start location on tree1)
+                    int tree_index = 0;
+                    a14 = 0x6543;
+                    int b6 = a6;
+                    a1 = 0x7654;
+                    a11 = 0;
+                    
+                    for (int b6i = 0; b6i < b6; b6i++)
+                    {
+                        a2 = (tree1[tree_index] & 0xffff);  //; look at next bit length
+
+                        if (a2 >= a14)  //; is it less than the last minimum(a14)
+                            goto add20;
+
+                        a14 = a2;   //; if yes, save new minimum
+                        a11 = tree_index;
+                        //A11_tree1 = tree1.ToList(); //save pointer to minimum
+
+                    add20:
+                        // adk20 replication
+                        tree_index++;
+                    }
+
+                    int value = ((tree1[a11] >> 0x10) << 0x10) + a1;
+                    
+                    tree1.Insert(a11, value);
+                    tree1.RemoveAt(a11+1);
+                    tree2.Add(A11_tree1);
+                }
+
+                a11 = 0;    // code
+                a1 = 0;     // code inc
+                a2 = 0;     // last bit length
+                a14 = a6 - 1;   // loop counter
+                //List<int> temp_tree = new List<int>();
+                
+                // test...
+                tree1.RemoveAt(tree1.Count - 1);
+
+                for (int a14i = 0; a14i < a14; a14i++)
+                {
+                    // get translated pointer (goign from last to first)
+                    //temp_tree = tree2[tree2.Count-1];
+                    //tree2.RemoveAt(tree2.Count-1);
+                    int value = tree1[tree1.Count - 1 - a14i];
+                    a11 += a1;
+                    a3 = (value >> 0x10) & 0xff ;
+                    if (a3 == a2)
+                        goto ff904130;
+
+                    a2 = a3;
+                    a3 = 0x10;
+                    a3 -= a2;
+                    a1 = 1;
+                    a1 <<= a3;
+
+                ff904130:
+                    int a5 = a11;
+                    a9 = 0x10;
+                    
+                    for (int a9i = 0; a9i < a9; a9i++)
+                    {
+                        a5 <<= 1;
+                        a3 = (((a5 >> 0x10) & 0xffff) << 0x10) + (a3 & 0xffff);
+                        a3 >>= 1;
+                        a5 &= 0xffff;
+                    }
+                    tree1[tree1.Count - 1 -a14i] = (value >> 0x10) << 0x10 | (a3 & 0xffff);
+                }
+
+                
+
+                error3:
+                Console.WriteLine("Checksum mismatch unzipping");
+            }
+
+            void read_tree()
+            {
+                int a2 = 1;
+                uint temp1 = Tools.BoolArrayToByte(bools.Take(1).ToArray());
+                temp1 = Tools.RotateLeft(temp1, 0x1f);
+                int b6 = 0;
+                // get bit from table
+                // get another bit from table
+                int a14 = 0x20;
+                a14 -= a2;
+
+            }
+
+        }
+
+
         // returns the address in ROM that follows a 0-terminator
         static int Find_Next_Part(int frame)
         {
@@ -1173,6 +1645,227 @@ namespace MKII_Asset_Extractor
                             }
                     }
                     break;
+            }
+        }
+
+    }
+
+    static public class Extract2
+    {
+        public class MKPalette
+        {
+            public string Name;
+            public List<SKColor> Colors;
+        }
+
+        public class MKHeader
+        {
+            public string Name;
+            public short Width;
+            public short Height;
+            public short XOffset;
+            public short YOffset;
+            public uint GFXLocation;
+            public short DMA;
+            public MKPalette? MK_Pal;
+        }
+
+        // #1 (.ASM)
+        public static List<MKPalette> ReadPalettesIntoMemory()
+        {
+            List<MKPalette> MKPalettes = new List<MKPalette>();
+
+            //get all the files in our palette directory and process them.
+            Console.WriteLine("Getting palettes...");
+
+            foreach (var item in Directory.GetFiles("src/pals/"))
+            {
+                Console.WriteLine($"...{item}");
+                string[] lines = File.ReadAllLines(item);
+                
+                for (int l = 0; l < lines.Length; l++)
+                {
+                    // see if we are at a label
+                    if (!lines[l].EndsWith(":") || lines[l].StartsWith(';'))
+                        continue;
+
+                    // make new palette
+                    MKPalette pal = new MKPalette();
+                    pal.Name = lines[l].TrimEnd(':');
+                    l++;
+
+                    // get palette size.  not used anyhow
+                    try
+                    {
+                        int size = int.Parse(lines[l][^2..]);
+                        l++;
+                    }
+                    catch (Exception)
+                    {
+
+                        continue;
+                    }
+
+
+                    // iterate through palette color lines
+                    List<string> names = new List<string>();
+                    while (l < lines.Length && !string.IsNullOrEmpty(lines[l]) )
+                    {
+                        // get colors as strings
+                        string[] str_colors = lines[l].Trim('\t', ' ').Substring(5).Split(',');
+                        names.AddRange(str_colors.ToList());
+                        l++;
+                    }
+
+                    // palette over, convert hex strings to color list
+                    pal.Colors = Tools2.ConvertColorList(names);
+                    MKPalettes.Add(pal);
+                }
+            }
+            return MKPalettes;
+        }
+
+        // #2 (.TBL)
+        public static void ReadHeadersIntoMemory(List<MKPalette> pals)
+        {
+            List<MKHeader> headers = new List<MKHeader>();
+            MKPalette last_palette = null;
+            
+
+            //get all the files in our palette directory and process them.
+            Console.WriteLine("Getting sprites...");
+
+            foreach (var item in Directory.GetFiles("src/sprites/"))
+            {
+                Console.WriteLine($"...{item}");
+                string[] lines = File.ReadAllLines(item);
+
+                for (int l = 0; l < lines.Length; l++)
+                {
+                    // see if we are at a label
+                    if (!lines[l].EndsWith(":")) continue;
+                    
+                    // make new header
+                    MKHeader header = new MKHeader();
+                    header.Name = lines[l].Trim(':');
+
+                check_for_dimensions:
+                    l++;
+
+                    // check for dimensions
+                    Regex rx_dim = new Regex(@"\d+,\d+,-?\d+,-?\d+");
+                    var match = rx_dim.Match(lines[l]);
+                    if (!match.Success)
+                    {
+                        Console.WriteLine($"Dimensions mismatch on line {l-1}. Value={lines[l]}");
+                        goto check_for_dimensions;
+                    } 
+                    string[] dimensions = match.Value.Split(',');
+                    header.Width = short.Parse(dimensions[0]);
+                    header.Height = short.Parse(dimensions[1]);
+                    header.XOffset = short.Parse(dimensions[2]);
+                    header.YOffset = short.Parse(dimensions[3]);
+
+                check_for_address:
+                    l++;
+                    if(l == lines.Length) { continue; }
+
+                    // check if valid gfx address
+                    //Regex rx_addy = new Regex(@"(0[xX]){1}[A-Fa-f0-9]{8}H$ | [A-Fa-f0-9]{8}H$");
+                    Regex rx_addy = new Regex(@"[A-Fa-f0-9]+H$");
+                    match = rx_addy.Match(lines[l]);
+                    if (!match.Success)
+                    {
+                        Console.WriteLine($"GFX Address mismatch {lines[l]}");
+                        goto check_for_address;
+                    } 
+                    header.GFXLocation = uint.Parse(match.Value.Trim('H','h'), System.Globalization.NumberStyles.HexNumber);
+
+                check_for_dma:
+                    l++;
+                    if (l == lines.Length) { continue; }
+
+                    // check if valid dma
+                    Regex rx_dma = new Regex(@"[A-Fa-f0-9]+H$");
+                    match = rx_dma.Match(lines[l]);
+                    if (!match.Success)
+                    {
+                        Console.WriteLine($"DMA mismatch on line {l-1}. Value={lines[l]}");
+                        goto check_for_dma;
+                    }
+                    header.DMA = short.Parse((string)match.Value.Trim('H','h'), System.Globalization.NumberStyles.HexNumber);
+
+                    // check if new label or palette
+                    l++;
+                    if (l == lines.Length) { continue; }
+
+                    if (lines[l].EndsWith(':') || lines[l] == "\t.TEXT")
+                    {
+                        l--;
+                        header.MK_Pal = last_palette;
+                        goto add_header;
+                    }
+
+                    // no label detected, check for palette
+                    Regex rx_pal = new Regex(@"\w+_P$", RegexOptions.IgnoreCase);
+                    match = rx_pal.Match(lines[l]);
+                    if(match.Success)
+                    {
+                        goto assign_pal;
+                    }
+                    else
+                    {
+                        // see if we have a uniquely named palette with a less strict regex
+                        // and see if it's in our palette list
+                        Regex rx_pal2 = new Regex(@"\w+$", RegexOptions.IgnoreCase);
+                        match = rx_pal2.Match(lines[l]);
+                        if (match.Success)
+                        {
+                            if(pals.Find(x => x.Name == match.Value) != null)
+                            {
+                                Console.WriteLine($"Palette unique: {match.Value}");
+                                goto assign_pal;
+                            }
+                        }
+                        else
+                        {
+                            Console.WriteLine($"Palette mismatch on line {l - 1}. Value={lines[l]}");
+                            header.MK_Pal = null;
+                        }   
+                    }
+
+                    assign_pal:
+                    if (pals.Find(x => x.Name == match.Value) != null)
+                    {
+                        header.MK_Pal = pals.Find(x => x.Name == match.Value);
+                    }
+                    else
+                    {
+                        Console.WriteLine($"Couldn't find palette \"{match.Value}\" ");
+                        header.MK_Pal = null;
+                    }
+                        
+
+
+                add_header:
+                    headers.Add(header);
+                }
+            }
+        }
+
+        public static class Tools2
+        {
+            public static List<SKColor> ConvertColorList(List<string> str_colors)
+            {
+                List<SKColor> sKColors = new List<SKColor>();
+
+                foreach (string str_color in str_colors)
+                {
+                    string t = str_color.TrimEnd('H', 'h');
+                    sKColors.Add(Converters.Convert_Color(Int16.Parse(t, System.Globalization.NumberStyles.HexNumber)));
+                }
+
+                return sKColors;
             }
         }
 
