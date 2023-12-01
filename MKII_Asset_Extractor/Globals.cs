@@ -116,6 +116,16 @@ namespace MKII_Asset_Extractor
             ANI_65_SCORPION_SLICED_ME			// 65 F
         }
 
+        public enum Ani_IDs_Fighters2
+        {
+            SPEC_ANI_0,
+            SPEC_ANI_1,
+            SPEC_ANI_2,
+            SPEC_ANI_3,
+            SPEC_ANI_4,
+            SPEC_ANI_5
+        }
+
         public enum Ani_IDs_Kintaro
         {
             A_GSTANCE,                  // 0 - STANCE

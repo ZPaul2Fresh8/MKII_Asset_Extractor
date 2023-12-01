@@ -76,7 +76,7 @@ namespace MKII_Asset_Extractor
             while (chars_processed < 93)
             {
                 int header_loc = (int)Tools.Get_Pointer(FONT_RNDM_SELECT + (chars_processed * 4));
-                var skbitmap = Imaging.Draw_Image(Tools.Build_Header(header_loc), false);
+                var skbitmap = Imaging.Draw_Image(Tools.Build_Header(header_loc));
 
                 chars_processed += 1;
                 if (skbitmap != null)
@@ -99,7 +99,7 @@ namespace MKII_Asset_Extractor
             while (chars_processed < 93)
             {
                 int header_loc = (int)Tools.Get_Pointer(FONT_FLAWL_VICTR + (chars_processed * 4));
-                var skbitmap = Imaging.Draw_Image(Tools.Build_Header(header_loc), false);
+                var skbitmap = Imaging.Draw_Image(Tools.Build_Header(header_loc));
 
                 chars_processed += 1;
                 if (skbitmap != null)
@@ -122,7 +122,7 @@ namespace MKII_Asset_Extractor
             while (chars_processed < 93)
             {
                 int header_loc = (int)Tools.Get_Pointer(FONT_MK2 + (chars_processed * 4));
-                var skbitmap = Imaging.Draw_Image(Tools.Build_Header(header_loc), false);
+                var skbitmap = Imaging.Draw_Image(Tools.Build_Header(header_loc));
 
                 chars_processed += 1;
                 if (skbitmap != null)
@@ -157,7 +157,7 @@ namespace MKII_Asset_Extractor
                 List<string> members = line.Split("|").ToList();
                 Header header = Tools.Build_Header(Convert.ToInt32(members[0], 16));
                 Globals.PALETTE = Converters.Convert_Palette((int)(header.palloc / 8) & 0xfffff);
-                SKBitmap bitmap = Imaging.Draw_Image(header, false);
+                SKBitmap bitmap = Imaging.Draw_Image(header);
 
                 // DRAW FRAME
                 if (bitmap != null)
@@ -175,12 +175,19 @@ namespace MKII_Asset_Extractor
 
         static public void Animations()
         {
+            // SPECIFICS
             int FIGHTER_ANIMS_LOC   = 0x20c2a;  // FIGHTERS ANIMATION ARRAYS
+            int FIGHTER_SPEC_ANIMS_LOC = 0x20c6e; // FIGHTER SPECIAL ANIMATION ARRAYS
+            
+            int START = FIGHTER_ANIMS_LOC;
+
+            // GENERIC DIR
             string FIGHTER_ANI_DIR = "assets/gfx/fighters/";
             
             // for animations that have more than 1 part
             string[] postfixnames = { "", "part1", "part2", "part3", "part4", "part5", "part6", "part7" };
 
+            RUN_IT:
             // MAKE FIGHTER DIR & GET ANIMATION PTR
             //for (int ochar = 0; ochar < Enum.GetNames(typeof(Enums.Fighters)).Length; ochar++)
             for (int ochar = 0; ochar < 1; ochar++)
@@ -191,24 +198,46 @@ namespace MKII_Asset_Extractor
                 if (!Directory.Exists(FIGHTER_ANI_DIR + fighter)){Directory.CreateDirectory(FIGHTER_ANI_DIR + fighter);}
 
                 // GET PTR TO FIGHTER ANIMATIONS
-                int animations = (int)Tools.Get_Pointer(FIGHTER_ANIMS_LOC + (ochar * 4));
+                int animations = (int)Tools.Get_Pointer(START + (ochar * 4));
 
                 // SET ANIMATION COUNT
                 int ani_count;
                 string ani_name;
 
+                // SET ANIMATION COUNT
                 switch (ochar)
                 {
                     case (int)Enums.Fighters.KINTARO:
-                        ani_count = Enum.GetNames(typeof(Enums.Ani_IDs_Kintaro)).Length;
+                        if(START == FIGHTER_ANIMS_LOC)
+                        {
+                            ani_count = Enum.GetNames(typeof(Enums.Ani_IDs_Kintaro)).Length;
+                        }
+                        else
+                        {
+                            ani_count = 6;
+                        }
                         break;
 
                     case (int)Enums.Fighters.SHAO_KAHN:
-                        ani_count = Enum.GetNames(typeof(Enums.Ani_IDs_Kahn)).Length;
+                        if (START == FIGHTER_ANIMS_LOC)
+                        {
+                            ani_count = Enum.GetNames(typeof(Enums.Ani_IDs_Kahn)).Length;
+                        }
+                        else
+                        {
+                            ani_count = 6;
+                        }
                         break;
 
                     default:
-                        ani_count = Enum.GetNames(typeof(Enums.Ani_IDs_Fighters)).Length;
+                        if (START == FIGHTER_ANIMS_LOC)
+                        {
+                            ani_count = Enum.GetNames(typeof(Enums.Ani_IDs_Fighters)).Length;
+                        }
+                        else
+                        {
+                            ani_count = 6;
+                        }
                         break;
                 }
 
@@ -221,17 +250,38 @@ namespace MKII_Asset_Extractor
                     switch (ochar)
                     {
                         case (int)Enums.Fighters.KINTARO:
-                            AnimName = Enum.GetName(typeof(Enums.Fighters), ochar) + "/" + Enum.GetName(typeof(Enums.Ani_IDs_Kintaro), Anim_ID);
+                            if(START == FIGHTER_ANIMS_LOC)
+                            {
+                                AnimName = Enum.GetName(typeof(Enums.Fighters), ochar) + "/" + Enum.GetName(typeof(Enums.Ani_IDs_Kintaro), Anim_ID);
+                            }
+                            else
+                            {
+                                AnimName = Enum.GetName(typeof(Enums.Fighters), ochar) + "/" + Enum.GetName(typeof(Enums.Ani_IDs_Fighters2), Anim_ID);
+                            }
                             AnimPath = FIGHTER_ANI_DIR + AnimName;
                             break;
 
                         case (int)Enums.Fighters.SHAO_KAHN:
-                            AnimName = Enum.GetName(typeof(Enums.Fighters), ochar) + "/" + Enum.GetName(typeof(Enums.Ani_IDs_Kahn), Anim_ID);
+                            if (START == FIGHTER_ANIMS_LOC)
+                            {
+                                AnimName = Enum.GetName(typeof(Enums.Fighters), ochar) + "/" + Enum.GetName(typeof(Enums.Ani_IDs_Kahn), Anim_ID);
+                            }
+                            else
+                            {
+                                AnimName = Enum.GetName(typeof(Enums.Fighters), ochar) + "/" + Enum.GetName(typeof(Enums.Ani_IDs_Fighters2), Anim_ID);
+                            }
                             AnimPath = FIGHTER_ANI_DIR + AnimName;
                             break;
 
                         default:
-                            AnimName = Enum.GetName(typeof(Enums.Fighters), ochar) + "/" + Enum.GetName(typeof(Enums.Ani_IDs_Fighters), Anim_ID);
+                            if (START == FIGHTER_ANIMS_LOC)
+                            {
+                                AnimName = Enum.GetName(typeof(Enums.Fighters), ochar) + "/" + Enum.GetName(typeof(Enums.Ani_IDs_Fighters), Anim_ID);
+                            }
+                            else
+                            {
+                                AnimName = Enum.GetName(typeof(Enums.Fighters), ochar) + "/" + Enum.GetName(typeof(Enums.Ani_IDs_Fighters2), Anim_ID);
+                            }
                             AnimPath = FIGHTER_ANI_DIR + AnimName;
                             break;
                     }
@@ -254,11 +304,6 @@ namespace MKII_Asset_Extractor
 
                     // ADDED FOR MULTIPLE PART ANIMATIONS
                     int Part = 1;
-
-
-
-                    
-                    //++
                     int File_Pos = 0;
 
                 // JUMP BACK HERE IF ANIMATION HAS 2-PARTS WHICH ARE SEPARATED BY A TERMINATOR, IE WINPOSE.
@@ -389,7 +434,7 @@ namespace MKII_Asset_Extractor
                         }*/
 
                         // SET SPECIFIC PALETTE FOR SPRITE CREATIONS.
-                        Choose_Palette(Frame_Num, Anim_ID, ochar);
+                        Choose_Palette(Frame_Num, Anim_ID, ochar, START);
 
                         
 
@@ -411,17 +456,19 @@ namespace MKII_Asset_Extractor
 
                                 // FOR PARSING
                                 Headers.Add(header);
-                                
-                                bool create_palette = (Seg_Num + Frame_Num + Anim_ID > 0);
+
+                                bool create_palette = (header.palloc != 0);
+                                //bool create_palette = (Seg_Num + Frame_Num + Anim_ID > 0);
 
                                 // MAKE PALETTE IF PROJECTILE
-                                if ((Anim_ID == 39) && (Seg_Num == 0))
+                                if ((Anim_ID == 39) && (Frame_Num == 0) && (Seg_Num == 0))
+                                //if ((Anim_ID == 39) && (Seg_Num == 0))
                                 {
                                     Globals.PALETTE = Converters.Convert_Palette((int)((header.palloc / 8) & 0xfffff));
                                 }
 
                                 // DRAW SEGMENT
-                                SKBitmap bitmap = Imaging.Draw_Image(header, create_palette);
+                                SKBitmap bitmap = Imaging.Draw_Image(header);
                                 
                                 Segs.Add(bitmap);
 
@@ -458,8 +505,9 @@ namespace MKII_Asset_Extractor
                         // DRAW FRAME
                         {
                             var header = Tools.Build_Header(Tools.Get_Pointer(Frame));
-                            bool create_palette = (Frame_Num + Anim_ID > 0);
-                            SKBitmap bitmap = Imaging.Draw_Image(header, create_palette);
+                            bool create_palette = (header.palloc != 0);
+                            //bool create_palette = (Frame_Num + Anim_ID > 0);
+                            SKBitmap bitmap = Imaging.Draw_Image(header);
                             if (bitmap != null)
                             {
                                 var image = SKImage.FromBitmap(bitmap);
@@ -607,7 +655,7 @@ namespace MKII_Asset_Extractor
                                     Part++;
                                     goto animation_continuation;
 
-                                // projectile
+                                // projectile object
                                 case 0x27:
                                     Frame += 4;
                                     Part++;
@@ -908,6 +956,14 @@ namespace MKII_Asset_Extractor
                 }
 
             }
+
+            
+            // CHECK IF SPECIAL ANIMATIONS HAVE BEEN DONE.
+            if(START != FIGHTER_SPEC_ANIMS_LOC)
+            {
+                START = FIGHTER_SPEC_ANIMS_LOC;
+                goto RUN_IT;
+            }; 
         }
 
         static public void Sprite_List()
@@ -1122,7 +1178,7 @@ namespace MKII_Asset_Extractor
                 {
                     Globals.PALETTE = Converters.Convert_Palette((int)(header.palloc / 8) & 0xfffff);
                 }
-                SKBitmap bitmap = Imaging.Draw_Image(header, false);
+                SKBitmap bitmap = Imaging.Draw_Image(header);
 
                 // DRAW FRAME
                 if (bitmap != null)
@@ -1151,7 +1207,7 @@ namespace MKII_Asset_Extractor
             int rom_loc = (int)((parent_loc / 8) & 0xfffff);
             Header header = Tools.Build_Header(rom_loc);
             Globals.PALETTE = Converters.Convert_Palette((int)(header.palloc / 8) & 0xfffff);
-            SKBitmap bitmap = Imaging.Draw_Image(header, false);
+            SKBitmap bitmap = Imaging.Draw_Image(header);
             if (bitmap != null)
             {
                 var image = SKImage.FromBitmap(bitmap);
@@ -1169,7 +1225,7 @@ namespace MKII_Asset_Extractor
             {
                 // find location of next child
                 header = Tools.Build_Header((int)(i *14 + parent_loc + 18));
-                bitmap = Imaging.Draw_Image(header, false);
+                bitmap = Imaging.Draw_Image(header);
                 if (bitmap != null)
                 {
                     var image = SKImage.FromBitmap(bitmap);
@@ -1581,70 +1637,109 @@ namespace MKII_Asset_Extractor
         /// <param name="frame_num"></param>
         /// <param name="ani_id"></param>
         /// <param name="ochar"></param>
-        static void Choose_Palette(int frame_num, int ani_id, int ochar)
+        /// /// <param name="The starting location of the animation array."></param>
+        static void Choose_Palette(int frame_num, int ani_id, int ochar, int START)
         {
 
             // ONLY CREATE PALETTE IF ON FRAME 0
             if (frame_num != 0) { return; }
 
-            switch (ochar)
+            // PALETTE ASSIGNMENTS PER BASIC ANIMATION TABLE
+            if (START != 0x20c6e)
             {
-                case (int)Enums.Fighters.SHAO_KAHN:
-                    switch (ani_id)
-                    {
-                        case (int)Enums.Ani_IDs_Kahn.A_STONE_CRACK:
-                            {
-                                Globals.PALETTE = Converters.Convert_Palette(Tools.Get_Pointer(STONE_PAL));
-                                break;
-                            }
-                        case (int)Enums.Ani_IDs_Kahn.STONE_EXPLODE:
-                            {
-                                Globals.PALETTE = Converters.Convert_Palette(Tools.Get_Pointer(STONE_PAL));
-                                break;
-                            }
-                        default:
-                            {
-                                Globals.PALETTE = Converters.Convert_Palette(Tools.Get_Pointer(ochar * 4 + PRIMARY_PAL));
-                                break;
-                            }
-                    }
-                    break;
+                switch (ochar)
+                {
+                    case (int)Enums.Fighters.SHAO_KAHN:
+                        switch (ani_id)
+                        {
+                            case (int)Enums.Ani_IDs_Kahn.A_STONE_CRACK:
+                                {
+                                    Globals.PALETTE = Converters.Convert_Palette(Tools.Get_Pointer(STONE_PAL));
+                                    break;
+                                }
+                            case (int)Enums.Ani_IDs_Kahn.STONE_EXPLODE:
+                                {
+                                    Globals.PALETTE = Converters.Convert_Palette(Tools.Get_Pointer(STONE_PAL));
+                                    break;
+                                }
+                            default:
+                                {
+                                    Globals.PALETTE = Converters.Convert_Palette(Tools.Get_Pointer(ochar * 4 + PRIMARY_PAL));
+                                    break;
+                                }
+                        }
+                        break;
 
-                default:
-                    switch (ani_id)
-                    {
-                        case 0:
-                            {
+                    default:
+                        switch (ani_id)
+                        {
+                            //case 0:
+                            //    {
+                            //        Globals.PALETTE = Converters.Convert_Palette(Tools.Get_Pointer(ochar * 4 + PRIMARY_PAL));
+                            //        break;
+                            //    }
+                            case 40:
+                                {
+                                    Globals.PALETTE = Converters.Convert_Palette(Tools.Get_Pointer(ochar * 8 + PRIMARY_PAL));
+                                    break;
+                                }
+                            case 58:
+                                {
+                                    Globals.PALETTE = Converters.Convert_Palette(Tools.Get_Pointer(ochar * 8 + PRIMARY_PAL));
+                                    break;
+                                }
+                            //case 59:
+                            //    {
+                            //        Globals.PALETTE = Converters.Convert_Palette(Tools.Get_Pointer(ochar * 8 + FATAL_PAL));
+                            //        break;
+                            //    }
+                            case 62:
+                                {
+                                    Globals.PALETTE = Converters.Convert_Palette(Tools.Get_Pointer(ochar * 4 + PRIMARY_PAL));
+                                    break;
+                                }
+                            case 65:
+                                {
+                                    Globals.PALETTE = Converters.Convert_Palette(Tools.Get_Pointer(ochar * 8 + FATAL_PAL));
+                                    break;
+                                }
+                        }
+                        break;
+                }
+            }
+            // PALETTE ASSIGNMENTS PER SPECIAL ANIMATION TABLE
+            else
+            {
+                switch (ochar)
+                {
+                    case (int)Enums.Fighters.SHAO_KAHN:
+                        Globals.PALETTE = Converters.Convert_Palette(Tools.Get_Pointer(ochar * 4 + PRIMARY_PAL));
+                        break;
+
+                    case (int)Enums.Fighters.KINTARO:
+                        Globals.PALETTE = Converters.Convert_Palette(Tools.Get_Pointer(ochar * 4 + PRIMARY_PAL));
+                        break;
+
+                    default:
+
+                        switch (ani_id)
+                        {
+                            // projectile
+                            //case 0:
+                            //    break;
+
+                            // spin move (Lao)
+                            case 1:
                                 Globals.PALETTE = Converters.Convert_Palette(Tools.Get_Pointer(ochar * 4 + PRIMARY_PAL));
                                 break;
-                            }
-                        case 40:
-                            {
-                                Globals.PALETTE = Converters.Convert_Palette(Tools.Get_Pointer(ochar * 8 + PRIMARY_PAL));
-                                break;
-                            }
-                        case 58:
-                            {
-                                Globals.PALETTE = Converters.Convert_Palette(Tools.Get_Pointer(ochar * 8 + PRIMARY_PAL));
-                                break;
-                            }
-                        case 59:
-                            {
-                                Globals.PALETTE = Converters.Convert_Palette(Tools.Get_Pointer(ochar * 8 + FATAL_PAL));
-                                break;
-                            }
-                        case 62:
-                            {
-                                Globals.PALETTE = Converters.Convert_Palette(Tools.Get_Pointer(ochar * 4 + PRIMARY_PAL));
-                                break;
-                            }
-                        case 65:
-                            {
-                                Globals.PALETTE = Converters.Convert_Palette(Tools.Get_Pointer(ochar * 8 + FATAL_PAL));
-                                break;
-                            }
-                    }
-                    break;
+
+                            // impaled fatality
+                            //case 5:
+                            //    Globals.PALETTE = Converters.Convert_Palette(Tools.Get_Pointer(ochar * 8 + FATAL_PAL));
+                            //    break;
+                        }
+                        break;
+                }
             }
         }
 
@@ -1661,6 +1756,7 @@ namespace MKII_Asset_Extractor
         public class MKHeader
         {
             public string Name;
+            public string Origin;
             public short Width;
             public short Height;
             public short XOffset;
@@ -1726,19 +1822,22 @@ namespace MKII_Asset_Extractor
         }
 
         // #2 (.TBL)
-        public static void ReadHeadersIntoMemory(List<MKPalette> pals)
+        public static List<MKHeader> ReadHeadersIntoMemory(List<MKPalette> pals)
         {
             List<MKHeader> headers = new List<MKHeader>();
-            MKPalette last_palette = null;
-            
+            string dir = "src/sprites/";
 
             //get all the files in our palette directory and process them.
             Console.WriteLine("Getting sprites...");
 
-            foreach (var item in Directory.GetFiles("src/sprites/"))
+            foreach (var item in Directory.GetFiles(dir))
             {
                 Console.WriteLine($"...{item}");
                 string[] lines = File.ReadAllLines(item);
+                
+                // reset last palette before any file processing
+                // still need a bullet-proof method of palette assignment
+                MKPalette last_palette = null;
 
                 for (int l = 0; l < lines.Length; l++)
                 {
@@ -1748,6 +1847,7 @@ namespace MKII_Asset_Extractor
                     // make new header
                     MKHeader header = new MKHeader();
                     header.Name = lines[l].Trim(':');
+                    header.Origin = item.Substring(dir.Length);
 
                 check_for_dimensions:
                     l++;
@@ -1838,11 +1938,13 @@ namespace MKII_Asset_Extractor
                     if (pals.Find(x => x.Name == match.Value) != null)
                     {
                         header.MK_Pal = pals.Find(x => x.Name == match.Value);
+                        last_palette = header.MK_Pal;
                     }
                     else
                     {
                         Console.WriteLine($"Couldn't find palette \"{match.Value}\" ");
                         header.MK_Pal = null;
+                        last_palette = null;
                     }
                         
 
@@ -1851,7 +1953,10 @@ namespace MKII_Asset_Extractor
                     headers.Add(header);
                 }
             }
+            return headers;
         }
+
+        // #3 Create Sprites From Headers in Memory.
 
         public static class Tools2
         {

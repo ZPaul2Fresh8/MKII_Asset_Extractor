@@ -8,6 +8,7 @@ using System.Threading.Tasks;
 using static System.Net.Mime.MediaTypeNames;
 using System.Diagnostics;
 using System.Diagnostics.Contracts;
+using static MKII_Asset_Extractor.Extract2;
 
 namespace MKII_Asset_Extractor
 {
@@ -212,6 +213,12 @@ namespace MKII_Asset_Extractor
                 palloc = Get_Long(location + 14)
             };
 
+            // validate header palloc is a legitimate pallette
+            if(header.palloc < 0xff800000)
+            {
+                header.palloc = 0;
+            }
+
             return header;
         }
     }
@@ -283,7 +290,13 @@ namespace MKII_Asset_Extractor
             return true;
         }
 
-        public static SKBitmap Draw_Image(Header header, bool create_palette)
+        /// <summary>
+        /// Used for drawing bitmaps from ROM file.
+        /// </summary>
+        /// <param name="header"></param>
+        /// <param name="create_palette"></param>
+        /// <returns></returns>
+        public static SKBitmap Draw_Image(Header header)
         {
             
             //var header = Tools.Build_Header(location);
@@ -320,8 +333,59 @@ namespace MKII_Asset_Extractor
             }
 
             // CREATE IMAGE
-            return Fill_Pixels((int)header.width, (int)header.height, bits, Globals.PALETTE, (int)header.draw_att);
+            if (header.palloc != 0)
+            {
+                return Fill_Pixels((int)header.width, (int)header.height, bits, Converters.Convert_Palette((int)(header.palloc / 8) & 0xfffff), (int)header.draw_att);
+            }
+            else
+            {
+                return Fill_Pixels((int)header.width, (int)header.height, bits, Globals.PALETTE, (int)header.draw_att);
+            }
+        }
 
+        /// <summary>
+        /// Used for drawing bitmaps from MKHeaders in memory from TBL files.
+        /// </summary>
+        /// <param name="header2"></param>
+        /// <returns></returns>
+        public static SKBitmap Draw_Image2(Extract2.MKHeader header2)
+        {
+
+            if (header2.Width > 0x190 || header2.Height > 0xff)
+            {
+                Console.WriteLine($"Header {header2.Name} dimensions exceeded logical expectations.");
+                return null;
+            }
+            if (header2.Width <= 0 || header2.Height <= 0)
+            {
+                Console.WriteLine($"Header {header2.Name} dimensions didn't meet logical expectations.");
+                return null;
+            }
+
+            int bpp = (int)((header2.DMA & 0xffff) >> 0xc);
+
+            if (bpp == 0) { return null; }
+
+            uint gfx_start = (uint)((header2.GFXLocation - (header2.GFXLocation % 8)) / 8);
+            uint gfx_end = (uint)(gfx_start + ((header2.Width * header2.Height * bpp) + (header2.GFXLocation % 8) / 8));
+            List<byte> data = Globals.GFX.Skip((int)gfx_start).Take((int)(gfx_end - gfx_start)).ToList();
+
+            // Add to TOTAL_BYTES_EXTRACTED
+            Globals.GFX_BYTES_EXTRACTED += data.Count;
+
+            // CREATE BIT ARRAY
+            var bits = Tools.Bytes_To_Bits(data);
+
+            // TRIM STARTING OFFSET
+            bits.RemoveRange(0, (int)(header2.GFXLocation % 8));
+            if (bits.Count == 0)
+            {
+                Console.WriteLine("Problem. GFX bits are empty.");
+                return null;
+            }
+
+            // CREATE IMAGE
+            return Fill_Pixels((int)header2.Width, (int)header2.Height, bits, header2.MK_Pal.Colors, (int)header2.DMA);
         }
 
         static SKBitmap Fill_Pixels(int width, int height, List<byte> bits, List<SKColor> palette, int draw_att)
@@ -517,6 +581,7 @@ namespace MKII_Asset_Extractor
                 int word = Tools.Get_Word(pal_loc + 2 + c);
                 palette.Add(Convert_Color(word));
             }
+            Globals.PALETTE = palette;
             return palette;
         }
 

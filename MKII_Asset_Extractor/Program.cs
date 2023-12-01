@@ -3,6 +3,7 @@ using System.Linq;
 using System;
 using System.Runtime.CompilerServices;
 using MKII_Asset_Extractor;
+using SkiaSharp;
 
 Console.WriteLine("[MKII ASSET EXTRACTOR]");
 Thread.Sleep(500);
@@ -71,7 +72,8 @@ while (true)
 
         case (char)ConsoleKey.P:
             Console.WriteLine("\nExtracting Assets From Source...");
-            Extract2.ReadHeadersIntoMemory(Extract2.ReadPalettesIntoMemory());
+            List<Extract2.MKHeader> Headers = Extract2.ReadHeadersIntoMemory(Extract2.ReadPalettesIntoMemory());
+            Extract_Sprites_Src(Headers);
             ListOptions();
             break;
 
@@ -88,25 +90,27 @@ while (true)
 static void ListOptions()
 {
     Console.WriteLine("\nCHOOSE AN OPTION:");
-    Thread.Sleep(150);
+    Thread.Sleep(20);
     Console.WriteLine("1(A): Extract Image Headers.");
-    Thread.Sleep(50);
+    Thread.Sleep(20);
     Console.WriteLine("2(B): Create Images From Headers.");
-    Thread.Sleep(50);
+    Thread.Sleep(20);
     Console.WriteLine("3(C): Extract Color Palettes.");
-    Thread.Sleep(50);
+    Thread.Sleep(20);
     Console.WriteLine("4(D): Interleave Program ROMs.");
-    Thread.Sleep(50);
+    Thread.Sleep(20);
     Console.WriteLine("5(E): Interleave Graphic ROMs.");
-    Thread.Sleep(50);
+    Thread.Sleep(20);
     Console.WriteLine("6(F): Extract Fonts.");
-    Thread.Sleep(50);
+    Thread.Sleep(20);
     Console.WriteLine("7(G): Extract Animations.");
-    Thread.Sleep(50);
+    Thread.Sleep(20);
     Console.WriteLine("8(H): Extract All Assets.");
-    Thread.Sleep(50);
+    Thread.Sleep(20);
     Console.WriteLine("9(I): Extract Sprite Lists.");
-    Thread.Sleep(50);
+    Thread.Sleep(20);
+    Console.WriteLine("P: Extract Sprites (SRC).");
+    Thread.Sleep(20);
     Console.WriteLine("ESC: Exit");
 }
 
@@ -127,7 +131,7 @@ void Interleave_PRG()
     MSG_Success();
 }
 
-void Interleave_GFX()
+static void Interleave_GFX()
 {
     var ug14 = new List<byte>(File.ReadAllBytes("roms/ug14-vid"));
     var uj14 = new List<byte>(File.ReadAllBytes("roms/uj14-vid"));
@@ -309,6 +313,26 @@ static void Extract_Sprite_Lists()
     Extract.Sprite_List();
     Console.WriteLine("\n SPRITE LISTS DONE!");
     Thread.Sleep(200);
+}
+
+static void Extract_Sprites_Src(List<Extract2.MKHeader> src)
+{
+    if (!GFX_Check())
+    {
+        Interleave_GFX();
+    }
+
+    foreach (Extract2.MKHeader hdr in src)
+    {
+        if(hdr.MK_Pal == null) continue;
+
+        SKBitmap bm = Imaging.Draw_Image2(hdr);
+        if(bm == null) continue;
+
+        SKData parsed_data = bm.Encode(SKEncodedImageFormat.Png, 100);
+        Directory.CreateDirectory($"src/{hdr.Origin}/");
+        File.WriteAllBytes($"src/{hdr.Origin}/{hdr.Name}.bmp", parsed_data.ToArray());
+    }
 }
 
 static bool PRG_Check()
