@@ -48,3 +48,4 @@ C:\Users\zpaul\Documents\C#\repos\MKII_Asset_Extractor\MKII_Asset_Extractor\obj\
 C:\Users\zpaul\Documents\C#\repos\MKII_Asset_Extractor\MKII_Asset_Extractor\obj\Debug\net6.0\MKII_Asset_Extractor.pdb
 C:\Users\zpaul\Documents\C#\repos\MKII_Asset_Extractor\MKII_Asset_Extractor\obj\Debug\net6.0\MKII_Asset_Extractor.genruntimeconfig.cache
 C:\Users\zpaul\Documents\C#\repos\MKII_Asset_Extractor\MKII_Asset_Extractor\obj\Debug\net6.0\ref\MKII_Asset_Extractor.dll
+C:\Users\zpaul\Documents\C#\repos\MKII_Asset_Extractor\MKII_Asset_Extractor\obj\Debug\net6.0\MKII_Asset_Extractor.sourcelink.json

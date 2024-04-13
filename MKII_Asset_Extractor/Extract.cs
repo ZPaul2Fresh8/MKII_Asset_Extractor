@@ -20,8 +20,9 @@ namespace MKII_Asset_Extractor
     static public class Extract
     {
         const int PRIMARY_PAL = 0x20F22;    // PRIMARY PALETTE ARRAY
-        const int FATAL_PAL = 0x21920;  // FATALITY PALETTE ARRAY
-        const int STONE_PAL = 0x7CE34;  // SK STONE PALETTE
+        const int FATAL_PAL = 0x21920;          // FATALITY PALETTE ARRAY
+        const int STONE_PAL = 0x7CE34;          // SK STONE PALETTE
+        const int RAIDEN_GETUP_PAL = 0x73BCE;   // RAIDEN GET UP PALETTE
 
         static public void Fonts()
         {
@@ -310,18 +311,9 @@ namespace MKII_Asset_Extractor
                 animation_continuation:;
                     Anim_Cont = false;
                     
-                    // to save our original position after we follow a 0000 0001 animation jump flag.
-                    //int File_Pos = 0;
-                    
                     // if 0, done with animation, goto check for continuations.
                     while (Tools.Get_Long(Frame) != 0)
                     {
-                        // restore original file position if we followed an animation jump flag.
-                        //if (File_Pos != 0)
-                        //{
-                        //    Frame = File_Pos;
-                        //}
-                        
                         // 0x7780 ANIMATION ROUTINE ARRAY LOC
                         uint Frame_Ptr = Tools.Get_Long(Frame);
                         
@@ -337,6 +329,13 @@ namespace MKII_Asset_Extractor
                                 break;
 
                             case 1:
+                                if (Anim_ID == 39)
+                                {
+                                    Frame += 12;
+                                    continue;
+                                    //break;
+                                }
+
                                 // NEXT LONG = WHERE TO JUMP FOR ANIMATION LOOP
                                 int Ani_Command = 0;
 
@@ -373,6 +372,7 @@ namespace MKII_Asset_Extractor
                                     Frame_Jump = Frame_Num - ((Frame - Ani_Command) / 4);
                                     var file = File.OpenWrite(AnimPath + "/1." + Frame_Jump.ToString() + ".end");
                                 }
+                                
                                 goto end_of_animation;
 
                             case 2:
@@ -425,18 +425,8 @@ namespace MKII_Asset_Extractor
                                 break;
                         }
 
-
-                        // DISABLED -- PREVIOUSLY USED FOR SEGMENT
-                        // IF DIR NON-EXISTENT, CREATE IT FOR ANIMATION
-/*                        if (!Directory.Exists(AnimPath + "/" + Frame_Num.ToString()))
-                        {
-                            Directory.CreateDirectory(AnimPath + "/" + Frame_Num.ToString());
-                        }*/
-
                         // SET SPECIFIC PALETTE FOR SPRITE CREATIONS.
                         Choose_Palette(Frame_Num, Anim_ID, ochar, START);
-
-                        
 
                         // CHECK IF MULTISEGMENTED FRAME BY LOOKING AT *PTR
                         if (Imaging.Is_Frame_MultiSegmented(Frame))
@@ -501,8 +491,8 @@ namespace MKII_Asset_Extractor
                             parsed_data.Dispose();
 
                         }
-                        else
                         // DRAW FRAME
+                        else
                         {
                             var header = Tools.Build_Header(Tools.Get_Pointer(Frame));
                             bool create_palette = (header.palloc != 0);
@@ -522,7 +512,7 @@ namespace MKII_Asset_Extractor
                         Frame_Num += 1;
                     }
 
-
+                    // MANUALLY DEFINE WHICH ANIMS HAS MULTIPLE PARTS SEPARARTED BY TERMINATOR.
                     switch (Part)
                     {
                         case 1:
@@ -656,7 +646,7 @@ namespace MKII_Asset_Extractor
                                     goto animation_continuation;
 
                                 // projectile object
-                                case 0x27:
+                                case 39:
                                     Frame += 4;
                                     Part++;
                                     goto animation_continuation;
@@ -775,10 +765,11 @@ namespace MKII_Asset_Extractor
                                     goto animation_continuation;
 
                                 // projectile
-                                case 0x27:
+                                /*case 0x27:
                                     Frame += 4;
                                     Part++;
                                     goto animation_continuation;
+                                */
 
                                 // thrown by lao
                                 case 0x2a:
@@ -847,10 +838,10 @@ namespace MKII_Asset_Extractor
                                     goto animation_continuation;
 
                                 // projectile
-                                case 0x27:
-                                    Frame += 4;
-                                    Part++;
-                                    goto animation_continuation;
+                                //case 0x27:
+                                  //  Frame += 4;
+                                    //Part++;
+                                    //goto animation_continuation;
 
                                 // thrown by lao
                                 case 0x2a:
@@ -935,28 +926,10 @@ namespace MKII_Asset_Extractor
                         goto animation_continuation;
                     }
 
-
-
-                // if next long is 0, let's check the succeeding longs for matches
-                // in our frame array, if so then we have an animation which will
-                // be played in reverse with select frames.
-                /*                    if(!Frames.Contains((int)Tools.Get_Long(Frame))) { continue; }
-
-                                    var file = File.OpenWrite(AnimPath + "/0.rev");
-                                    while (Frames.Contains((int)Tools.Get_Long(Frame)))
-                                    {
-                                        uint nextlong = Tools.Get_Long(Frame);
-                                        if (nextlong == 0) { break;}
-                                        if (Frames.Contains((int)nextlong))
-                                        {
-                                            file.Write()
-                                        }
-                                    }*/
                 end_of_animation:;
                 }
 
             }
-
             
             // CHECK IF SPECIAL ANIMATIONS HAVE BEEN DONE.
             if(START != FIGHTER_SPEC_ANIMS_LOC)
@@ -1678,29 +1651,72 @@ namespace MKII_Asset_Extractor
                             //        Globals.PALETTE = Converters.Convert_Palette(Tools.Get_Pointer(ochar * 4 + PRIMARY_PAL));
                             //        break;
                             //    }
-                            case 40:
+                            case (int)Enums.Ani_IDs_Fighters.ANI_19_HIGH_PUNCH:
+                                {
+                                    if (ochar == (int)Enums.Fighters.RAIDEN)
+                                    {
+                                        Globals.PALETTE = Converters.Convert_Palette(Tools.Get_Pointer(ochar * 4 + PRIMARY_PAL));
+                                    }
+                                    break;
+                                }
+                            case (int)Enums.Ani_IDs_Fighters.ANI_23_GET_UP_FROM_SWEPT:
+                                {
+                                    if (ochar == (int)Enums.Fighters.RAIDEN)
+                                    {
+                                        Globals.PALETTE = Converters.Convert_Palette(Tools.Get_Pointer(RAIDEN_GETUP_PAL));
+                                    }
+                                    
+                                    break;
+                                }
+                            case (int)Enums.Ani_IDs_Fighters.ANI_24_LOW_PUNCH_CROUCHED:
+                                {
+                                    if (ochar == (int)Enums.Fighters.RAIDEN)
+                                    {
+                                        Globals.PALETTE = Converters.Convert_Palette(Tools.Get_Pointer(ochar * 4 + PRIMARY_PAL));
+                                    }
+                                    break;
+                                }
+                            case (int)Enums.Ani_IDs_Fighters.ANI_40_STUNNED:
+                                {
+                                    Globals.PALETTE = Converters.Convert_Palette(Tools.Get_Pointer(ochar * 4 + PRIMARY_PAL));
+                                    break;
+                                }
+                            case (int)Enums.Ani_IDs_Fighters.ANI_58_SLOW_PROJ_BANG:
                                 {
                                     Globals.PALETTE = Converters.Convert_Palette(Tools.Get_Pointer(ochar * 8 + PRIMARY_PAL));
                                     break;
                                 }
-                            case 58:
+                            case 59:
                                 {
-                                    Globals.PALETTE = Converters.Convert_Palette(Tools.Get_Pointer(ochar * 8 + PRIMARY_PAL));
+                                    Globals.PALETTE = Converters.Convert_Palette(Tools.Get_Pointer(ochar * 8 + FATAL_PAL));
                                     break;
                                 }
-                            //case 59:
-                            //    {
-                            //        Globals.PALETTE = Converters.Convert_Palette(Tools.Get_Pointer(ochar * 8 + FATAL_PAL));
-                            //        break;
-                            //    }
                             case 62:
                                 {
                                     Globals.PALETTE = Converters.Convert_Palette(Tools.Get_Pointer(ochar * 4 + PRIMARY_PAL));
                                     break;
                                 }
-                            case 65:
+                            case (int)Enums.Ani_IDs_Fighters.ANI_65_SCORPION_SLICED_ME:
                                 {
                                     Globals.PALETTE = Converters.Convert_Palette(Tools.Get_Pointer(ochar * 8 + FATAL_PAL));
+                                    break;
+                                }
+                            case (int)Enums.Ani_IDs_Fighters.SPEC_ANI_00:
+                                {
+                                    // Superman Move
+                                    if (ochar == (int)Enums.Fighters.RAIDEN || ochar == (int)Enums.Fighters.SUBZERO)
+                                    {
+                                        Globals.PALETTE = Converters.Convert_Palette(Tools.Get_Pointer(ochar * 4 + PRIMARY_PAL));
+                                    }
+                                    break;
+                                }
+                            case (int)Enums.Ani_IDs_Fighters.SPEC_ANI_01:
+                                {
+                                    // slide
+                                    if (ochar == (int)Enums.Fighters.SUBZERO)
+                                    {
+                                        Globals.PALETTE = Converters.Convert_Palette(Tools.Get_Pointer(ochar * 4 + PRIMARY_PAL));
+                                    }
                                     break;
                                 }
                         }
@@ -1957,16 +1973,23 @@ namespace MKII_Asset_Extractor
         }
 
         // #3 Create Sprites From Headers in Memory.
-
         public static class Tools2
         {
+            // Make color list from string hex value
             public static List<SKColor> ConvertColorList(List<string> str_colors)
             {
                 List<SKColor> sKColors = new List<SKColor>();
 
-                foreach (string str_color in str_colors)
+                int i = 0;
+                foreach (string s in str_colors)
                 {
-                    string t = str_color.TrimEnd('H', 'h');
+                    if (i == 0)
+                    {
+                        sKColors.Add(SKColors.Transparent);
+                        i++;
+                        continue;
+                    }
+                    string t = s.TrimEnd('H', 'h');
                     sKColors.Add(Converters.Convert_Color(Int16.Parse(t, System.Globalization.NumberStyles.HexNumber)));
                 }
 

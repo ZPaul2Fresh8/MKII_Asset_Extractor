@@ -72,10 +72,86 @@ while (true)
 
         case (char)ConsoleKey.P:
             Console.WriteLine("\nExtracting Assets From Source...");
-            List<Extract2.MKHeader> Headers = Extract2.ReadHeadersIntoMemory(Extract2.ReadPalettesIntoMemory());
-            Extract_Sprites_Src(Headers);
+            List<Extract2.MKHeader> SRC_Headers = Extract2.ReadHeadersIntoMemory(Extract2.ReadPalettesIntoMemory());
+            Extract_Sprites_Src(SRC_Headers);
             ListOptions();
             break;
+
+        case (char)ConsoleKey.M:
+            
+            // FIRST TEST = BP FF8c6040 - Lao Slice
+            // animation = ff8ce070
+
+            if (!PRG_Check()) { return; }
+            if (!GFX_Check()) { return; }
+
+            do_another:
+            Console.WriteLine("\nInput Arguments: \t\t[(string)NAME|(int)SPRITE HDR ADDRESS|(int)PALETTE ADDRESS]");
+            string[] vars = Console.ReadLine().Split('|');
+            string name;
+            int loc;
+            int pal;
+            try
+            {
+                name = vars[0];
+                loc = Convert.ToInt32(vars[1]);
+                pal = Convert.ToInt32(vars[2]);
+            }
+            catch (Exception ex) 
+            {
+                Console.WriteLine(ex.ToString());
+                goto do_another;
+            }
+            
+            Globals.PALETTE = Converters.Convert_Palette(pal);
+
+            // GET SEGMENT PTRS HERE
+            int Segment = Tools.Get_Pointer(loc);
+            int Seg_Num = 0;
+
+            // VARS FOR PARSING BITMAPS AFTER PROCESSING IMAGES
+            List<SKBitmap> Segs = new List<SKBitmap>();
+            List<Header> Headers = new List<Header>();
+
+            // GRAB SEGMENTS AND DRAW THEM
+            while (Tools.Get_Long(Segment) != 0)
+            {
+                // DRAW SEGMENT
+                Header header = Tools.Build_Header(Tools.Get_Pointer(Segment));
+
+                // FOR PARSING
+                Headers.Add(header);
+
+                bool create_palette = (header.palloc != 0);
+                //bool create_palette = (Seg_Num + Frame_Num + Anim_ID > 0);
+
+                // DRAW SEGMENT
+                SKBitmap bitmap = Imaging.Draw_Image(header);
+
+                Segs.Add(bitmap);
+                Segment += 4;
+                Seg_Num += 1;
+            }
+
+            // PARSE SEGMENTS HERE
+            SKImage parsed_image = Imaging.ParseSegments(Segs, Headers);
+            SKData parsed_data = parsed_image.Encode(SKEncodedImageFormat.Png, 100);
+
+            // find left-most offset to use as x offset value
+            List<Header> SortedOffsetX = Headers.OrderBy(o => o.offsetx).ToList();
+            List<Header> SortedOffsetY = Headers.OrderBy(o => o.offsety).ToList();
+
+            if (!Directory.Exists("assets/gfx/manual_extracts"))
+            {
+                Directory.CreateDirectory("assets/gfx/manual_extracts");
+            }
+            File.WriteAllBytes($"assets/gfx/manual_extracts/x_{name}_{SortedOffsetX[0].offsetx}_{SortedOffsetY[0].offsety}_{parsed_image.Width}_{parsed_image.Height}_x_{(loc * 8) + 0xff800000:X8}.png", parsed_data.ToArray());
+            parsed_image.Dispose();
+            parsed_data.Dispose();
+            Console.WriteLine($"{name} extracted.");
+
+
+            goto do_another;
 
         case (char)ConsoleKey.Escape:
             Console.WriteLine("Exiting...");
@@ -91,25 +167,27 @@ static void ListOptions()
 {
     Console.WriteLine("\nCHOOSE AN OPTION:");
     Thread.Sleep(20);
-    Console.WriteLine("1(A): Extract Image Headers.");
+    Console.WriteLine("1(A): Extract Image Headers.\t\t -Extract and save all bulk headers.");
     Thread.Sleep(20);
-    Console.WriteLine("2(B): Create Images From Headers.");
+    Console.WriteLine("2(B): Create Images From Headers.\t -Create Images from extracted headers.");
     Thread.Sleep(20);
-    Console.WriteLine("3(C): Extract Color Palettes.");
+    Console.WriteLine("3(C): Extract Color Palettes.\t\t -Extract all Palettes from game.");
     Thread.Sleep(20);
-    Console.WriteLine("4(D): Interleave Program ROMs.");
+    Console.WriteLine("4(D): Interleave Program ROMs.\t\t -Self-explanatory");
     Thread.Sleep(20);
-    Console.WriteLine("5(E): Interleave Graphic ROMs.");
+    Console.WriteLine("5(E): Interleave Graphic ROMs.\t\t -Self-explanatory");
     Thread.Sleep(20);
-    Console.WriteLine("6(F): Extract Fonts.");
+    Console.WriteLine("6(F): Extract Fonts.\t\t\t -Extract fonts.");
     Thread.Sleep(20);
-    Console.WriteLine("7(G): Extract Animations.");
+    Console.WriteLine("7(G): Extract Animations.\t\t -Extract fighter array animations.");
     Thread.Sleep(20);
     Console.WriteLine("8(H): Extract All Assets.");
     Thread.Sleep(20);
-    Console.WriteLine("9(I): Extract Sprite Lists.");
+    Console.WriteLine("9(I): Extract Sprite Lists.\t\t -Extract defined sprites.Must have PAL in header.");
     Thread.Sleep(20);
-    Console.WriteLine("P: Extract Sprites (SRC).");
+    Console.WriteLine("P: Extract Sprites (SRC).\t\t -Extract sprites from provided TBL files (src)");
+    Thread.Sleep(20);
+    Console.WriteLine("M: Extract Sprite @Location.\t\t -Extract sprite from address.");
     Thread.Sleep(20);
     Console.WriteLine("ESC: Exit");
 }
@@ -331,7 +409,7 @@ static void Extract_Sprites_Src(List<Extract2.MKHeader> src)
 
         SKData parsed_data = bm.Encode(SKEncodedImageFormat.Png, 100);
         Directory.CreateDirectory($"src/{hdr.Origin}/");
-        File.WriteAllBytes($"src/{hdr.Origin}/{hdr.Name}.bmp", parsed_data.ToArray());
+        File.WriteAllBytes($"src/{hdr.Origin}/x_{hdr.Name}_{hdr.XOffset}_{hdr.YOffset}_{hdr.Width}_{hdr.Height}.png", parsed_data.ToArray());
     }
 }
 

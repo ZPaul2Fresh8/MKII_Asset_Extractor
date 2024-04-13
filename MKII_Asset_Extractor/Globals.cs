@@ -113,7 +113,13 @@ namespace MKII_Asset_Extractor
             ANI_62_THROWN_BY_KINTARO,           // 62
             ANI_63_BACK_BREAKER,                // 63
             ANI_64_CHANGE,                      // 64
-            ANI_65_SCORPION_SLICED_ME			// 65 F
+            ANI_65_SCORPION_SLICED_ME,			// 65 F
+            SPEC_ANI_00,			            // 66
+            SPEC_ANI_01,            			// 67
+            SPEC_ANI_02,			            // 68
+            SPEC_ANI_03,			            // 69
+            SPEC_ANI_04,			            // 70
+            SPEC_ANI_05 			            // 71
         }
 
         public enum Ani_IDs_Fighters2
