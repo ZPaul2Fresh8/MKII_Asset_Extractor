@@ -302,14 +302,9 @@ namespace MKII_Asset_Extractor
             //var header = Tools.Build_Header(location);
             int location = header.loc;
 
-            if (header.width > 0xff || header.height > 0xff)
+            if (header.width > 0x190 || header.height > 0xff || header.width <= 0 || header.height <= 0)
             {
                 Console.WriteLine($"Header at {location} dimensions exceeded logical expectations.");
-                return null;
-            }
-            if (header.width <= 0 || header.height <= 0)
-            {
-                Console.WriteLine($"Header at {location} dimensions didn't meet logical expectations.");
                 return null;
             }
 
@@ -333,6 +328,11 @@ namespace MKII_Asset_Extractor
             }
 
             // CREATE IMAGE
+            return Fill_Pixels((int)header.width, (int)header.height, bits, Globals.PALETTE, (int)header.draw_att);
+
+            // removed any kind of logic for figuring out which headers have palettes abd if they should be
+            // used or not i.e. ninja palette swaps cause a ton of problems. Just defining palettes within the
+            // choose palette function!
             if (header.palloc != 0)
             {
                 return Fill_Pixels((int)header.width, (int)header.height, bits, Converters.Convert_Palette((int)(header.palloc / 8) & 0xfffff), (int)header.draw_att);
@@ -511,12 +511,16 @@ namespace MKII_Asset_Extractor
 
         public static SKImage ParseSegments(List<SKBitmap> segs, List<Header> headers)
         {
-            int left = 0, right = 0, top = 255, bottom = 0, width = 0, height = 0;
+            //int left = 0, right = 0, top = 255, bottom = 0, width = 0, height = 0;
+            int left = 255, right = 0, top = 255, bottom = 0, width = 0, height = 0;
 
             for (int s = 0; s < segs.Count; s++)
             {
                 // find left
-                if (headers[s].offsetx < left) { left = headers[s].offsetx; }
+                if (headers[s].offsetx < left)
+                { 
+                    left = headers[s].offsetx;
+                }
 
                 // find right
                 if (headers[s].width + headers[s].offsetx > right)
@@ -548,6 +552,7 @@ namespace MKII_Asset_Extractor
                 int x = headers[b].offsetx - left;
                 surface.Canvas.DrawBitmap(segs[b], x, y);
             }
+            //surface.Canvas.Scale(-1.0f, -1.0f);
             return surface.Snapshot();
         }
     }

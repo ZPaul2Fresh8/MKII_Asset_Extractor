@@ -85,20 +85,25 @@ while (true)
             if (!PRG_Check()) { return; }
             if (!GFX_Check()) { return; }
 
-            do_another:
             Console.WriteLine("\nInput Arguments: \t\t[(string)NAME|(int)SPRITE HDR ADDRESS|(int)PALETTE ADDRESS]");
+            do_another:
             string[] vars = Console.ReadLine().Split('|');
             string name;
             int loc;
             int pal;
             try
             {
-                name = vars[0];
-                loc = Convert.ToInt32(vars[1]);
-                pal = Convert.ToInt32(vars[2]);
+                name = vars[1];
+                loc = Convert.ToInt32(vars[2]);
+                pal = Convert.ToInt32(vars[3]);
             }
             catch (Exception ex) 
             {
+                if (vars[0].Length==0)
+                {
+                    goto do_another;
+                }
+                
                 Console.WriteLine(ex.ToString());
                 goto do_another;
             }
@@ -141,11 +146,11 @@ while (true)
             List<Header> SortedOffsetX = Headers.OrderBy(o => o.offsetx).ToList();
             List<Header> SortedOffsetY = Headers.OrderBy(o => o.offsety).ToList();
 
-            if (!Directory.Exists("assets/gfx/manual_extracts"))
+            if (!Directory.Exists($"assets/gfx/manual_extracts/{vars[0]}"))
             {
-                Directory.CreateDirectory("assets/gfx/manual_extracts");
+                Directory.CreateDirectory($"assets/gfx/manual_extracts/{vars[0]}");
             }
-            File.WriteAllBytes($"assets/gfx/manual_extracts/x_{name}_{SortedOffsetX[0].offsetx}_{SortedOffsetY[0].offsety}_{parsed_image.Width}_{parsed_image.Height}_x_{(loc * 8) + 0xff800000:X8}.png", parsed_data.ToArray());
+            File.WriteAllBytes($"assets/gfx/manual_extracts/{vars[0]}/x_{name}_{SortedOffsetX[0].offsetx}_{SortedOffsetY[0].offsety}_{parsed_image.Width}_{parsed_image.Height}_x_{(loc * 8) + 0xff800000:X8}.png", parsed_data.ToArray());
             parsed_image.Dispose();
             parsed_data.Dispose();
             Console.WriteLine($"{name} extracted.");

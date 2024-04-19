@@ -23,6 +23,7 @@ namespace MKII_Asset_Extractor
         const int FATAL_PAL = 0x21920;          // FATALITY PALETTE ARRAY
         const int STONE_PAL = 0x7CE34;          // SK STONE PALETTE
         const int RAIDEN_GETUP_PAL = 0x73BCE;   // RAIDEN GET UP PALETTE
+        const int ANI_SPLIT_IN_2_TAB = 0x19E22; // LAO SPLIT IN 2 FATAL TABLE
 
         static public void Fonts()
         {
@@ -179,7 +180,7 @@ namespace MKII_Asset_Extractor
             // SPECIFICS
             int FIGHTER_ANIMS_LOC   = 0x20c2a;  // FIGHTERS ANIMATION ARRAYS
             int FIGHTER_SPEC_ANIMS_LOC = 0x20c6e; // FIGHTER SPECIAL ANIMATION ARRAYS
-            
+
             int START = FIGHTER_ANIMS_LOC;
 
             // GENERIC DIR
@@ -188,10 +189,14 @@ namespace MKII_Asset_Extractor
             // for animations that have more than 1 part
             string[] postfixnames = { "", "part1", "part2", "part3", "part4", "part5", "part6", "part7" };
 
+            // flags for drawing sprites
+            bool FlipX;
+            bool FlipY;
+
             RUN_IT:
             // MAKE FIGHTER DIR & GET ANIMATION PTR
             //for (int ochar = 0; ochar < Enum.GetNames(typeof(Enums.Fighters)).Length; ochar++)
-            for (int ochar = 0; ochar < 1; ochar++)
+            for (int ochar = 7; ochar < 8; ochar++)
             {
                 string fighter = Enum.GetName(typeof(Enums.Fighters), ochar);
 
@@ -292,7 +297,18 @@ namespace MKII_Asset_Extractor
                     Console.WriteLine($"...{AnimName}");
 
                     // GET ANIMATION POINTER
-                    int Ani_Ptr = Tools.Get_Pointer(animations + (Anim_ID * 4));
+                    int Ani_Ptr;
+                    switch (Anim_ID)
+                    {
+                        case (int)Enums.Ani_IDs_Fighters.ANI_SPLIT_IN_2:
+                            Ani_Ptr = Tools.Get_Pointer(ANI_SPLIT_IN_2_TAB + (ochar * 4));
+                            break;
+
+                        default:
+                            Ani_Ptr = Tools.Get_Pointer(animations + (Anim_ID * 4));
+                            break;
+                    }
+                    
 
                     // IF 0 GOTO NEXT ANIMATION
                     if (Ani_Ptr == 0) { continue; }
@@ -309,7 +325,10 @@ namespace MKII_Asset_Extractor
 
                 // JUMP BACK HERE IF ANIMATION HAS 2-PARTS WHICH ARE SEPARATED BY A TERMINATOR, IE WINPOSE.
                 animation_continuation:;
+                    // reset flags
                     Anim_Cont = false;
+                    FlipX = false;
+                    FlipY = false;
                     
                     // if 0, done with animation, goto check for continuations.
                     while (Tools.Get_Long(Frame) != 0)
@@ -322,13 +341,14 @@ namespace MKII_Asset_Extractor
                         {
                             Frames.Add(Frame_Ptr);
                         }
-                        
+
+                        #region Check If Animation Command
                         switch (Frame_Ptr)
                         {
-                            case 0:
+                            case 0:     // end of anim
                                 break;
 
-                            case 1:
+                            case 1:     // do_ani_jump
                                 if (Anim_ID == 39)
                                 {
                                     Frame += 12;
@@ -375,38 +395,34 @@ namespace MKII_Asset_Extractor
                                 
                                 goto end_of_animation;
 
-                            case 2:
-                                // FLIP X
+                            case 2:     // do_ani_flip
+                                FlipX = true;
                                 Frame += 4;
                                 continue;
 
-                            case 3:
-                                // ADJUST POSITION
+                            case 3:     // do_ani_adjustx
                                 Frame += 6;
                                 continue;
 
-                            case 4:
-                                // ADJUST X AND Y POSITIONS
+                            case 4:     // do_ani_adjustxy
                                 Frame += 8;
                                 continue;
 
-                            case 5:
-                                // NEXT DATA (LONG)SPRITE PTR
+                            case 5:     // do_ani_nosleep
                                 Frame += 4;
                                 continue;
 
-                            case 6:
-                                // NEXT DATA = (LONG)FUNCTION PLAY AUDIO VARIANT
+                            case 6:     // do_ani_calla
                                 Frame += 8;
                                 continue;
 
-                            case 7:
+                            case 7:     // do_ani_sound
                                 // NEXT DATA = (LONG)FUNCTION PLAY AUDIO VARIANT
                                 Frame += 8;
                                 Anim_Cont = true;
                                 continue;
 
-                            case 8:
+                            case 8:     // do_ani_ochar_jump
                                 // NEXT DATA = (WORD)CHAR ID COMPARE FOR SHARED SPRITES IN NINJAS
                                 // GET NEXT WORD (CHAR ID)
                                 while (Tools.Get_Long(Frame) == 8)
@@ -421,9 +437,13 @@ namespace MKII_Asset_Extractor
                                 }
                                 break;
 
-                            case 9:
-                                break;
+                            case 9:     // do_ani_flip_vert
+                                FlipY = true;
+                                Frame += 4;
+                                Anim_Cont = true;
+                                continue;
                         }
+                        #endregion
 
                         // SET SPECIFIC PALETTE FOR SPRITE CREATIONS.
                         Choose_Palette(Frame_Num, Anim_ID, ochar, START);
@@ -447,31 +467,19 @@ namespace MKII_Asset_Extractor
                                 // FOR PARSING
                                 Headers.Add(header);
 
-                                bool create_palette = (header.palloc != 0);
-                                //bool create_palette = (Seg_Num + Frame_Num + Anim_ID > 0);
+                                //added for testing, clone fighters palettes wrong.
+                                bool create_palette = false;
+                                //bool create_palette = (header.palloc != 0);
 
                                 // MAKE PALETTE IF PROJECTILE
                                 if ((Anim_ID == 39) && (Frame_Num == 0) && (Seg_Num == 0))
-                                //if ((Anim_ID == 39) && (Seg_Num == 0))
                                 {
                                     Globals.PALETTE = Converters.Convert_Palette((int)((header.palloc / 8) & 0xfffff));
                                 }
 
                                 // DRAW SEGMENT
                                 SKBitmap bitmap = Imaging.Draw_Image(header);
-                                
                                 Segs.Add(bitmap);
-
-                                // DISABLED -- PREVIOUSLY USED FOR SEGMENT
-                                /*  if (bitmap != null)
-                                    {
-                                        var image = SKImage.FromBitmap(bitmap);
-                                        var data = image.Encode(SKEncodedImageFormat.Png, 100);
-                                        File.WriteAllBytes($"{AnimPath}/{Frame_Num}/{Seg_Num}_{header.width}_{header.height}" +
-                                            $"_{header.offsetx}_{header.offsety}.png", data.ToArray());
-                                        image.Dispose();
-                                        data.Dispose();
-                                    }*/
 
                                 Segment += 4;
                                 Seg_Num += 1;
@@ -495,8 +503,10 @@ namespace MKII_Asset_Extractor
                         else
                         {
                             var header = Tools.Build_Header(Tools.Get_Pointer(Frame));
-                            bool create_palette = (header.palloc != 0);
-                            //bool create_palette = (Frame_Num + Anim_ID > 0);
+
+                            bool create_palette = false;
+                            //bool create_palette = (header.palloc != 0);
+                            
                             SKBitmap bitmap = Imaging.Draw_Image(header);
                             if (bitmap != null)
                             {
@@ -729,6 +739,12 @@ namespace MKII_Asset_Extractor
                                     Frame += 4;
                                     Part++;
                                     goto animation_continuation;
+
+                                // split in 2
+                                case 66:
+                                    Frame += 4;
+                                    Part++;
+                                    goto animation_continuation;
                             }
                             break;
 
@@ -765,11 +781,11 @@ namespace MKII_Asset_Extractor
                                     goto animation_continuation;
 
                                 // projectile
-                                /*case 0x27:
+                                case 0x27:
                                     Frame += 4;
                                     Part++;
                                     goto animation_continuation;
-                                */
+
 
                                 // thrown by lao
                                 case 0x2a:
@@ -839,9 +855,9 @@ namespace MKII_Asset_Extractor
 
                                 // projectile
                                 //case 0x27:
-                                  //  Frame += 4;
-                                    //Part++;
-                                    //goto animation_continuation;
+                                //    Frame += 4;
+                                //    Part++;
+                                //    goto animation_continuation;
 
                                 // thrown by lao
                                 case 0x2a:
@@ -1618,7 +1634,7 @@ namespace MKII_Asset_Extractor
             if (frame_num != 0) { return; }
 
             // PALETTE ASSIGNMENTS PER BASIC ANIMATION TABLE
-            if (START != 0x20c6e)
+            if (START != 0x20c6e) // FIGHTER_SPEC_ANIMS_LOC
             {
                 switch (ochar)
                 {
@@ -1646,11 +1662,11 @@ namespace MKII_Asset_Extractor
                     default:
                         switch (ani_id)
                         {
-                            //case 0:
-                            //    {
-                            //        Globals.PALETTE = Converters.Convert_Palette(Tools.Get_Pointer(ochar * 4 + PRIMARY_PAL));
-                            //        break;
-                            //    }
+                            case (int)Enums.Ani_IDs_Fighters.ANI_00_STANCE:
+                                {
+                                    Globals.PALETTE = Converters.Convert_Palette(Tools.Get_Pointer(ochar * 4 + PRIMARY_PAL));
+                                    break;
+                                }
                             case (int)Enums.Ani_IDs_Fighters.ANI_19_HIGH_PUNCH:
                                 {
                                     if (ochar == (int)Enums.Fighters.RAIDEN)
@@ -1701,28 +1717,11 @@ namespace MKII_Asset_Extractor
                                     Globals.PALETTE = Converters.Convert_Palette(Tools.Get_Pointer(ochar * 8 + FATAL_PAL));
                                     break;
                                 }
-                            case (int)Enums.Ani_IDs_Fighters.SPEC_ANI_00:
-                                {
-                                    // Superman Move
-                                    if (ochar == (int)Enums.Fighters.RAIDEN || ochar == (int)Enums.Fighters.SUBZERO)
-                                    {
-                                        Globals.PALETTE = Converters.Convert_Palette(Tools.Get_Pointer(ochar * 4 + PRIMARY_PAL));
-                                    }
-                                    break;
-                                }
-                            case (int)Enums.Ani_IDs_Fighters.SPEC_ANI_01:
-                                {
-                                    // slide
-                                    if (ochar == (int)Enums.Fighters.SUBZERO)
-                                    {
-                                        Globals.PALETTE = Converters.Convert_Palette(Tools.Get_Pointer(ochar * 4 + PRIMARY_PAL));
-                                    }
-                                    break;
-                                }
                         }
                         break;
                 }
             }
+
             // PALETTE ASSIGNMENTS PER SPECIAL ANIMATION TABLE
             else
             {
@@ -1736,23 +1735,105 @@ namespace MKII_Asset_Extractor
                         Globals.PALETTE = Converters.Convert_Palette(Tools.Get_Pointer(ochar * 4 + PRIMARY_PAL));
                         break;
 
-                    default:
-
+                    case (int)Enums.Fighters.KUNG_LAO:
                         switch (ani_id)
                         {
-                            // projectile
-                            //case 0:
-                            //    break;
+                            case (int)Enums.Ani_IDs_Fighters2.SPEC_ANI_0:
+                                Globals.PALETTE = Converters.Convert_Palette(374780);
+                                break;
 
-                            // spin move (Lao)
-                            case 1:
+                            case (int)Enums.Ani_IDs_Fighters2.SPEC_ANI_1:
                                 Globals.PALETTE = Converters.Convert_Palette(Tools.Get_Pointer(ochar * 4 + PRIMARY_PAL));
                                 break;
 
-                            // impaled fatality
-                            //case 5:
-                            //    Globals.PALETTE = Converters.Convert_Palette(Tools.Get_Pointer(ochar * 8 + FATAL_PAL));
-                            //    break;
+                            case (int)Enums.Ani_IDs_Fighters2.SPEC_ANI_2:
+                                Globals.PALETTE = Converters.Convert_Palette(375030);
+                                break;
+
+                            case (int)Enums.Ani_IDs_Fighters2.SPEC_ANI_3:
+                                Globals.PALETTE = Converters.Convert_Palette(Tools.Get_Pointer(ochar * 4 + PRIMARY_PAL));
+                                break;
+
+                            case (int)Enums.Ani_IDs_Fighters2.SPEC_ANI_5:
+                                Globals.PALETTE = Converters.Convert_Palette(Tools.Get_Pointer(ochar * 8 + FATAL_PAL));
+                                break;
+                        }
+                        break;
+
+                    case (int)Enums.Fighters.LIU_KANG:
+                        switch (ani_id)
+                        {
+                            case (int)Enums.Ani_IDs_Fighters2.SPEC_ANI_1:
+                                Globals.PALETTE = Converters.Convert_Palette(375192);
+                                break;
+                            
+                            default:
+                                Globals.PALETTE = Converters.Convert_Palette(Tools.Get_Pointer(ochar * 4 + PRIMARY_PAL));
+                                break;
+
+                        }
+                        break;
+
+                    case (int)Enums.Fighters.RAIDEN:
+                        switch (ani_id)
+                        {
+                            case (int)Enums.Ani_IDs_Fighters2.SPEC_ANI_0:
+                                Globals.PALETTE = Converters.Convert_Palette(Tools.Get_Pointer(ochar * 4 + PRIMARY_PAL));
+                                break;
+
+                            case (int)Enums.Ani_IDs_Fighters2.SPEC_ANI_1:
+                                Globals.PALETTE = Converters.Convert_Palette(Tools.Get_Pointer(RAIDEN_GETUP_PAL));
+                                break;
+
+                            case (int)Enums.Ani_IDs_Fighters2.SPEC_ANI_2:
+                                Globals.PALETTE = Converters.Convert_Palette(Tools.Get_Pointer(ochar * 4 + PRIMARY_PAL));
+                                break;
+                        }
+                        break;
+
+                    case (int)Enums.Fighters.SUBZERO:
+                        switch (ani_id)
+                        {
+                            case (int)Enums.Ani_IDs_Fighters2.SPEC_ANI_0:
+                                Globals.PALETTE = Converters.Convert_Palette(Tools.Get_Pointer(ochar * 4 + PRIMARY_PAL));
+                                break;
+
+                            case (int)Enums.Ani_IDs_Fighters2.SPEC_ANI_1:
+                                Globals.PALETTE = Converters.Convert_Palette(379906);
+                                break;
+
+                            case (int)Enums.Ani_IDs_Fighters2.SPEC_ANI_2:
+                                Globals.PALETTE = Converters.Convert_Palette(379906);
+                                break;
+
+                            case (int)Enums.Ani_IDs_Fighters2.SPEC_ANI_3:
+                                Globals.PALETTE = Converters.Convert_Palette(Tools.Get_Pointer(ochar * 4 + PRIMARY_PAL));
+                                break;
+                        }
+                        break;
+
+                    case (int)Enums.Fighters.SCORPION:
+                        switch (ani_id)
+                        {
+                            case 0:
+                                Globals.PALETTE = Converters.Convert_Palette(Tools.Get_Pointer(ochar * 4 + PRIMARY_PAL));
+                                break;
+
+                            case (int)Enums.Ani_IDs_Fighters2.SPEC_ANI_1:
+                                Globals.PALETTE = Converters.Convert_Palette(379592);
+                                break;
+
+                            case (int)Enums.Ani_IDs_Fighters2.SPEC_ANI_2:
+                                Globals.PALETTE = Converters.Convert_Palette(Tools.Get_Pointer(ochar * 4 + PRIMARY_PAL));
+                                break;
+
+                            case (int)Enums.Ani_IDs_Fighters2.SPEC_ANI_4:
+                                Globals.PALETTE = Converters.Convert_Palette(379710);
+                                break;
+
+                            case (int)Enums.Ani_IDs_Fighters2.SPEC_ANI_5:
+                                Globals.PALETTE = Converters.Convert_Palette(Tools.Get_Pointer(ochar * 4 + PRIMARY_PAL));
+                                break;
                         }
                         break;
                 }

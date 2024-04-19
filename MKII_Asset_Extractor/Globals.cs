@@ -114,12 +114,13 @@ namespace MKII_Asset_Extractor
             ANI_63_BACK_BREAKER,                // 63
             ANI_64_CHANGE,                      // 64
             ANI_65_SCORPION_SLICED_ME,			// 65 F
-            SPEC_ANI_00,			            // 66
-            SPEC_ANI_01,            			// 67
-            SPEC_ANI_02,			            // 68
-            SPEC_ANI_03,			            // 69
-            SPEC_ANI_04,			            // 70
-            SPEC_ANI_05 			            // 71
+            //SPEC_ANI_00,			            // 
+            //SPEC_ANI_01,            			// 
+            //SPEC_ANI_02,			            // 
+            //SPEC_ANI_03,			            // 
+            //SPEC_ANI_04,			            // 
+            //SPEC_ANI_05, 			            // 
+            ANI_SPLIT_IN_2                      // 66 F
         }
 
         public enum Ani_IDs_Fighters2

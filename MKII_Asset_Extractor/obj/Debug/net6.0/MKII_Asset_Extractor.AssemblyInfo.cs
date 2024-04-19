@@ -14,7 +14,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("MKII_Asset_Extractor")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+65e0317e56209333ae414d654c439aac0228b745")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+0a5782f5b6dceb11bfcb5ec4aac26b3e0fd50bf0")]
 [assembly: System.Reflection.AssemblyProductAttribute("MKII_Asset_Extractor")]
 [assembly: System.Reflection.AssemblyTitleAttribute("MKII_Asset_Extractor")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]
