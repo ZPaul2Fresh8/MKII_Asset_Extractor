@@ -4,6 +4,7 @@ using System;
 using System.Runtime.CompilerServices;
 using MKII_Asset_Extractor;
 using SkiaSharp;
+using System.Reflection.Metadata;
 
 Console.WriteLine("[MKII ASSET EXTRACTOR]");
 Thread.Sleep(500);
@@ -85,78 +86,95 @@ while (true)
             if (!PRG_Check()) { return; }
             if (!GFX_Check()) { return; }
 
-            Console.WriteLine("\nInput Arguments: \t\t[(string)NAME|(int)SPRITE HDR ADDRESS|(int)PALETTE ADDRESS]");
-            do_another:
+            Console.WriteLine("\nInput Arguments: \t(string)FOLDER NAME|(string)NAME|(int)SPRITE HDR ADDRESS|(int)PALETTE ADDRESS|(bool)MULTI-FRAME?");
+
+
+            int frame_num = 0;
             string[] vars = Console.ReadLine().Split('|');
-            string name;
-            int loc;
-            int pal;
+            
+            ME_Table mE_Table = new ME_Table();
+            mE_Table.folder = vars[0];
+            mE_Table.subfolder = vars[1];
+            
+            string frameloc = vars[2];
+            try // convert to Int
+            {
+                mE_Table.frameloc = Convert.ToInt32(frameloc);
+            }
+            catch // failed, see if hex?
+            {
+                try
+                {
+                    int i = Convert.ToInt32(frameloc, 16);
+                    mE_Table.frameloc = (i / 8) & 0xfffff;
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine(ex.Message);
+                }
+            }
             try
             {
-                name = vars[1];
-                loc = Convert.ToInt32(vars[2]);
-                pal = Convert.ToInt32(vars[3]);
-            }
-            catch (Exception ex) 
-            {
-                if (vars[0].Length==0)
+                // if input arguments = 3 then header has palette in it
+                if (vars.Length == 3)
                 {
-                    goto do_another;
+                    // FRIENDSHIPS|Other|408098
+                    mE_Table.pal_loc = Tools.Get_Pointer(mE_Table.frameloc + 14);
                 }
+                else
+                {
+                    // if pal loc is low, use value as palette array index
+                    if (Convert.ToInt32(vars[3]) < 18)
+                    {
+                        mE_Table.pal_loc = Constants.m_palettes[Convert.ToInt32(vars[3])];
+                    }
+                    else
+                    {
+                        mE_Table.pal_loc = Convert.ToInt32(vars[3]);
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+
+                Console.WriteLine(ex.Message);
+            }
+          
+            if (vars.Length > 4)
+            {
+                mE_Table.multi_frame = true;
+            }
+
+            Globals.PALETTE = Converters.Convert_Palette(mE_Table.pal_loc);
+
+            // check if multi-frame
+            if (mE_Table.multi_frame)
+            {
+                int start_loc = mE_Table.frameloc;
                 
-                Console.WriteLine(ex.ToString());
-                goto do_another;
+                while (Tools.Get_Long(start_loc) > 0xff800000)
+                {
+                    mE_Table.frameloc = start_loc;
+                    save_frame(mE_Table, frame_num);
+                    frame_num++;
+                    start_loc += 4;
+                }
+
+                if (Tools.Get_Long(start_loc) == 1)
+                {
+                    // get final frame
+                    start_loc += 12;
+                    mE_Table.frameloc = start_loc;
+                    save_frame(mE_Table, frame_num);
+                    start_loc += 12;
+                }
             }
-            
-            Globals.PALETTE = Converters.Convert_Palette(pal);
-
-            // GET SEGMENT PTRS HERE
-            int Segment = Tools.Get_Pointer(loc);
-            int Seg_Num = 0;
-
-            // VARS FOR PARSING BITMAPS AFTER PROCESSING IMAGES
-            List<SKBitmap> Segs = new List<SKBitmap>();
-            List<Header> Headers = new List<Header>();
-
-            // GRAB SEGMENTS AND DRAW THEM
-            while (Tools.Get_Long(Segment) != 0)
+            else
             {
-                // DRAW SEGMENT
-                Header header = Tools.Build_Header(Tools.Get_Pointer(Segment));
-
-                // FOR PARSING
-                Headers.Add(header);
-
-                bool create_palette = (header.palloc != 0);
-                //bool create_palette = (Seg_Num + Frame_Num + Anim_ID > 0);
-
-                // DRAW SEGMENT
-                SKBitmap bitmap = Imaging.Draw_Image(header);
-
-                Segs.Add(bitmap);
-                Segment += 4;
-                Seg_Num += 1;
+                save_frame(mE_Table, frame_num);
+                frame_num++;
             }
-
-            // PARSE SEGMENTS HERE
-            SKImage parsed_image = Imaging.ParseSegments(Segs, Headers);
-            SKData parsed_data = parsed_image.Encode(SKEncodedImageFormat.Png, 100);
-
-            // find left-most offset to use as x offset value
-            List<Header> SortedOffsetX = Headers.OrderBy(o => o.offsetx).ToList();
-            List<Header> SortedOffsetY = Headers.OrderBy(o => o.offsety).ToList();
-
-            if (!Directory.Exists($"assets/gfx/manual_extracts/{vars[0]}"))
-            {
-                Directory.CreateDirectory($"assets/gfx/manual_extracts/{vars[0]}");
-            }
-            File.WriteAllBytes($"assets/gfx/manual_extracts/{vars[0]}/x_{name}_{SortedOffsetX[0].offsetx}_{SortedOffsetY[0].offsety}_{parsed_image.Width}_{parsed_image.Height}_x_{(loc * 8) + 0xff800000:X8}.png", parsed_data.ToArray());
-            parsed_image.Dispose();
-            parsed_data.Dispose();
-            Console.WriteLine($"{name} extracted.");
-
-
-            goto do_another;
+            break;
 
         case (char)ConsoleKey.Escape:
             Console.WriteLine("Exiting...");
@@ -166,6 +184,73 @@ while (true)
             Console.WriteLine("Invalid key pressed.");
             break;
     }
+}
+
+static void save_frame (ME_Table mE_Table, int frame_num)
+{
+    // GET SEGMENT PTRS HERE
+    int Segment = 0;
+    int Seg_Num = 0;
+
+    // VARS FOR PARSING BITMAPS AFTER PROCESSING IMAGES
+    List<SKBitmap> Segs = new List<SKBitmap>();
+    List<Header> Headers = new List<Header>();
+
+    if (mE_Table.multi_frame)
+    {
+        Segment = Tools.Get_Pointer(mE_Table.frameloc);
+
+        // GRAB SEGMENTS AND DRAW THEM
+        while (Tools.Get_Long(Segment) != 0)
+        {
+            // DRAW SEGMENT
+            Header header = Tools.Build_Header(Tools.Get_Pointer(Segment));
+
+            // FOR PARSING
+            Headers.Add(header);
+
+            bool create_palette = (header.palloc != 0);
+            //bool create_palette = (Seg_Num + Frame_Num + Anim_ID > 0);
+
+            // DRAW SEGMENT
+            SKBitmap bitmap = Imaging.Draw_Image(header);
+
+            Segs.Add(bitmap);
+            Segment += 4;
+            Seg_Num += 1;
+        }
+    }
+    else
+    {
+        // DRAW SEGMENT
+        Header header = Tools.Build_Header(mE_Table.frameloc);
+        header.palloc = (uint)mE_Table.pal_loc;
+
+        // FOR PARSING
+        Headers.Add(header);
+
+        // DRAW SEGMENT
+        SKBitmap bitmap = Imaging.Draw_Image(header);
+        Segs.Add(bitmap);
+    }
+
+    // PARSE SEGMENTS HERE
+    SKImage parsed_image = Imaging.ParseSegments(Segs, Headers);
+    SKData parsed_data = parsed_image.Encode(SKEncodedImageFormat.Png, 100);
+
+    // find left-most offset to use as x offset value
+    List<Header> SortedOffsetX = Headers.OrderBy(o => o.offsetx).ToList();
+    List<Header> SortedOffsetY = Headers.OrderBy(o => o.offsety).ToList();
+
+    if (!Directory.Exists($"assets/gfx/manual_extracts/{mE_Table.folder}/{mE_Table.subfolder}"))
+    {
+        Directory.CreateDirectory($"assets/gfx/manual_extracts/{mE_Table.folder}/{mE_Table.subfolder}");
+    }
+    File.WriteAllBytes($"assets/gfx/manual_extracts/{mE_Table.folder}/{mE_Table.subfolder}/{frame_num}_Frame_{SortedOffsetX[0].offsetx}_{SortedOffsetY[0].offsety}_{parsed_image.Width}_{parsed_image.Height}_x_{(mE_Table.frameloc * 8) + 0xff800000:X8}.png", parsed_data.ToArray());
+    parsed_image.Dispose();
+    parsed_data.Dispose();
+    Console.WriteLine($"{mE_Table.subfolder} - {mE_Table.frameloc} extracted.");
+
 }
 
 static void ListOptions()

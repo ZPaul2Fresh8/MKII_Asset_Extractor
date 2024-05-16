@@ -196,7 +196,7 @@ namespace MKII_Asset_Extractor
             RUN_IT:
             // MAKE FIGHTER DIR & GET ANIMATION PTR
             //for (int ochar = 0; ochar < Enum.GetNames(typeof(Enums.Fighters)).Length; ochar++)
-            for (int ochar = 7; ochar < 8; ochar++)
+            for (int ochar = 3; ochar < 4; ochar++)
             {
                 string fighter = Enum.GetName(typeof(Enums.Fighters), ochar);
 
@@ -296,12 +296,48 @@ namespace MKII_Asset_Extractor
 
                     Console.WriteLine($"...{AnimName}");
 
-                    // GET ANIMATION POINTER
+                    //
+                    // GET ANIMATION POINTER AND SPECIFY POINTERS FOR MISC ANIMATIONS
+                    //
                     int Ani_Ptr;
                     switch (Anim_ID)
                     {
                         case (int)Enums.Ani_IDs_Fighters.ANI_SPLIT_IN_2:
                             Ani_Ptr = Tools.Get_Pointer(ANI_SPLIT_IN_2_TAB + (ochar * 4));
+                            break;
+
+                        case (int)Enums.Ani_IDs_Fighters.ANI_FALLING_FROM_TORSO_DECAP:
+                            Ani_Ptr = Tools.Get_Pointer(animations + ((int)Enums.Ani_IDs_Fighters.ANI_60_FALLING_FROM_DECAPITATION * 4));
+                            break;
+
+                        case (int)Enums.Ani_IDs_Fighters.ANI_PITFALL:
+
+                            // set normal palette
+                            Globals.PALETTE = Converters.Convert_Palette(Tools.Get_Pointer(ochar * 4 + PRIMARY_PAL));
+
+                            // sub ochar id for repaletted ninjas
+                            int temp_id;
+
+                            switch (ochar)
+                            {
+                                case (int)Enums.Fighters.SMOKE:
+                                    temp_id = 8;    
+                                    break;
+
+                                case (int)Enums.Fighters.NOOB_SAIBOT:
+                                    temp_id = 8;
+                                    break;
+
+                                case (int)Enums.Fighters.JADE:
+                                    temp_id = 4;
+                                    break;
+
+                                default:
+                                    temp_id = ochar;
+                                    break;
+                            }
+
+                            Ani_Ptr = Tools.Get_Pointer(Constants.ANI_PITFALLS + (temp_id * 4));
                             break;
 
                         default:
@@ -372,7 +408,8 @@ namespace MKII_Asset_Extractor
                                 int Frame_Jump = 0;
 
                                 // Check if punch animations, if so follow the jump to get all the parts.
-                                if (Anim_ID == 19 || Anim_ID == 20)
+                                if (Anim_ID == (int)Enums.Ani_IDs_Fighters.ANI_19_HIGH_PUNCH ||
+                                    Anim_ID == (int)Enums.Ani_IDs_Fighters.ANI_20_LOW_PUNCH && ochar != (int)Enums.Fighters.KINTARO)
                                 {
                                     // since we're jumping to follow the animation, we need to increment our position in file to return
                                     // to later. +8 To pass over Flag and jump pointer and terminator.
@@ -392,7 +429,8 @@ namespace MKII_Asset_Extractor
                                     Frame_Jump = Frame_Num - ((Frame - Ani_Command) / 4);
                                     var file = File.OpenWrite(AnimPath + "/1." + Frame_Jump.ToString() + ".end");
                                 }
-                                
+
+                                goto check_for_other_parts;
                                 goto end_of_animation;
 
                             case 2:     // do_ani_flip
@@ -472,7 +510,7 @@ namespace MKII_Asset_Extractor
                                 //bool create_palette = (header.palloc != 0);
 
                                 // MAKE PALETTE IF PROJECTILE
-                                if ((Anim_ID == 39) && (Frame_Num == 0) && (Seg_Num == 0))
+                                if ((Anim_ID == (int)Enums.Ani_IDs_Fighters.ANI_39_PROJECTILE_OBJECT) && (Frame_Num == 0) && (Seg_Num == 0))
                                 {
                                     Globals.PALETTE = Converters.Convert_Palette((int)((header.palloc / 8) & 0xfffff));
                                 }
@@ -486,6 +524,13 @@ namespace MKII_Asset_Extractor
                             }
 
                             // PARSE SEGMENTS HERE
+                            // but if Animd_ID == 67 (Falling Torso Decap) - Don't use last segment
+                            if(Anim_ID == Convert.ToInt32(Enums.Ani_IDs_Fighters.ANI_FALLING_FROM_TORSO_DECAP))
+                            {
+                                Segs = Segs.Take(Segs.Count - 1).ToList();
+                                Headers = Headers.Take(Headers.Count - 1).ToList();
+                            }
+
                             SKImage parsed_image = Imaging.ParseSegments(Segs, Headers);
                             SKData parsed_data = parsed_image.Encode(SKEncodedImageFormat.Png, 100);
 
@@ -521,8 +566,11 @@ namespace MKII_Asset_Extractor
                         Frame += 4;
                         Frame_Num += 1;
                     }
-
+                    
+                    //
                     // MANUALLY DEFINE WHICH ANIMS HAS MULTIPLE PARTS SEPARARTED BY TERMINATOR.
+                    //
+                    check_for_other_parts:
                     switch (Part)
                     {
                         case 1:
@@ -530,219 +578,251 @@ namespace MKII_Asset_Extractor
                             switch (Anim_ID)
                             {
                                 // jump up land
-                                case 0x6:
+                                case (int)Enums.Ani_IDs_Fighters.ANI_06_JUMP_UP:
                                     Frame += 4;
                                     Part++;
                                     goto animation_continuation;
 
                                 // unblock hi
-                                case 0xb:
+                                case (int)Enums.Ani_IDs_Fighters.ANI_11_BLOCKING:
                                     Frame += 4;
                                     Part++;
                                     goto animation_continuation;
 
                                 // knocked down
-                                case 0xf:
+                                case (int)Enums.Ani_IDs_Fighters.ANI_15_KNOCKED_DOWN:
                                     Frame += 4;
                                     Part++;
                                     goto animation_continuation;
 
                                 // crouch unblock
-                                case 0xc:
+                                case (int)Enums.Ani_IDs_Fighters.ANI_12_BLOCKING_CROUCHED:
                                     Frame += 4;
                                     Part++;
                                     goto animation_continuation;
 
                                 // high kick
-                                case 0xd:
+                                case (int)Enums.Ani_IDs_Fighters.ANI_13_HIGH_KICK:
                                     Frame += 4;
                                     Part++;
                                     goto animation_continuation;
 
-                                // high kick
-                                case 0xe:
+                                // low kick
+                                case (int)Enums.Ani_IDs_Fighters.ANI_14_LOW_KICK:
                                     Frame += 4;
                                     Part++;
                                     goto animation_continuation;
 
                                 // hp
                                 case 0x13:
+                                    if (ochar == (int)Enums.Fighters.KINTARO) { break; }
                                     Frame += 4;
                                     Part++;
                                     goto animation_continuation;
 
                                 // lp
                                 case 0x14:
+                                    if (ochar == (int)Enums.Fighters.KINTARO) { break; }
                                     Frame += 4;
                                     Part++;
                                     goto animation_continuation;
 
                                 // sweep
-                                case 0x15:
+                                case (int)Enums.Ani_IDs_Fighters.ANI_21_SWEEPING:
                                     Frame += 4;
                                     Part++;
                                     goto animation_continuation;
 
                                 // swept
-                                case 0x16:
+                                case (int)Enums.Ani_IDs_Fighters.ANI_22_SWEPT:
                                     Frame += 4;
                                     Part++;
                                     goto animation_continuation;
 
                                 // low punch crouched
-                                case 0x18:
+                                case (int)Enums.Ani_IDs_Fighters.ANI_24_LOW_PUNCH_CROUCHED:
                                     Frame += 4;
                                     Part++;
                                     goto animation_continuation;
 
                                 // crouch hk
-                                case 0x19:
+                                case (int)Enums.Ani_IDs_Fighters.ANI_25_HIGH_KICK_CROUCHED:
                                     Frame += 4;
                                     Part++;
                                     goto animation_continuation;
 
                                 // low kick crouched
-                                case 0x1a:
+                                case (int)Enums.Ani_IDs_Fighters.ANI_26_LOW_KICK_CROUCHED:
                                     Frame += 4;
                                     Part++;
                                     goto animation_continuation;
 
                                 // uppercut
-                                case 0x1c:
+                                case (int)Enums.Ani_IDs_Fighters.ANI_28_UPPERCUT:
                                     Frame += 4;
                                     Part++;
                                     goto animation_continuation;
 
                                 // flying kick
-                                case 0x1e:
+                                case (int)Enums.Ani_IDs_Fighters.ANI_30_FLYING_KICK:
                                     Frame += 4;
                                     Part++;
                                     goto animation_continuation;
 
                                 // jump up kick
-                                case 0x1d:
+                                case (int)Enums.Ani_IDs_Fighters.ANI_29_JUMP_UP_KICK:
                                     Frame += 4;
                                     Part++;
                                     goto animation_continuation;
 
                                 // jump up punch
-                                case 0x1f:
+                                case (int)Enums.Ani_IDs_Fighters.ANI_31_FLYING_PUNCH:
                                     Frame += 4;
                                     Part++;
                                     goto animation_continuation;
 
                                 // roundhouse
-                                case 0x20:
+                                case (int)Enums.Ani_IDs_Fighters.ANI_32_ROUND_HOUSE:
                                     Frame += 4;
                                     Part++;
                                     goto animation_continuation;
 
                                 // knee to midsection
-                                case 0x21:
+                                case (int)Enums.Ani_IDs_Fighters.ANI_33_KNEE_TO_MID_SECTION:
                                     Frame += 4;
                                     Part++;
                                     goto animation_continuation;
 
                                 // close hp
-                                case 0x22:
+                                case (int)Enums.Ani_IDs_Fighters.ANI_34_ELBOW_TO_FACE:
                                     Frame += 4;
                                     Part++;
                                     goto animation_continuation;
 
                                 // grab opponent to throw
-                                case 0x24:
+                                case (int)Enums.Ani_IDs_Fighters.ANI_36_GRAB_OPPONENT_TO_THROW:
                                     Frame += 4;
                                     Part++;
                                     goto animation_continuation;
 
                                 // projectile object
-                                case 39:
+                                case (int)Enums.Ani_IDs_Fighters.ANI_39_PROJECTILE_OBJECT:
                                     Frame += 4;
                                     Part++;
                                     goto animation_continuation;
 
                                 // winpose
-                                //case 0x29:
+                                //case (int)Enums.Ani_IDs_Fighters.ANI_41_VICTORY_POSE:
                                 //    Frame += 4;
                                 //    Part++;
                                 //    goto animation_continuation;
 
+                                // thrown by lao
+                                case (int)Enums.Ani_IDs_Fighters.ANI_42_THROWN_BY_LAO:
+                                    Frame += 4;
+                                    Part++;
+                                    goto animation_continuation;
+
                                 // thrown by kang
-                                case 0x2b:
+                                case (int)Enums.Ani_IDs_Fighters.ANI_43_THROWN_BY_KANG:
                                     Frame += 4;
                                     Part++;
                                     goto animation_continuation;
 
                                 // thrown by cage
-                                case 0x2c:
-                                    Frame += 4;
-                                    Part++;
-                                    goto animation_continuation;
-
-                                // thrown by lao
-                                case 0x2a:
+                                case (int)Enums.Ani_IDs_Fighters.ANI_44_THROWN_BY_CAGE:
                                     Frame += 4;
                                     Part++;
                                     goto animation_continuation;
 
                                 // thrown by baraka
-                                case 0x2d:
+                                case (int)Enums.Ani_IDs_Fighters.ANI_45_THROWN_BY_BARAKA:
                                     Frame += 4;
                                     Part++;
                                     goto animation_continuation;
 
                                 // thrown by kitana
-                                case 0x2e:
+                                case (int)Enums.Ani_IDs_Fighters.ANI_46_THROWN_BY_KITANA:
+                                    Frame += 4;
+                                    Part++;
+                                    goto animation_continuation;
+
+                                // thrown by mileena
+                                case (int)Enums.Ani_IDs_Fighters.ANI_47_THROWN_BY_MILEENA:
                                     Frame += 4;
                                     Part++;
                                     goto animation_continuation;
 
                                 // thrown by shang
-                                case 0x30:
+                                case (int)Enums.Ani_IDs_Fighters.ANI_48_THROWN_BY_SHANG:
                                     Frame += 4;
                                     Part++;
                                     goto animation_continuation;
 
                                 // thrown by raiden
-                                case 0x31:
+                                case (int)Enums.Ani_IDs_Fighters.ANI_49_THROWN_BY_RAIDEN:
                                     Frame += 4;
                                     Part++;
                                     goto animation_continuation;
 
                                 // thrown by ninja
-                                case 0x32:
+                                case (int)Enums.Ani_IDs_Fighters.ANI_50_THROWN_BY_SUBZERO:
+                                    Frame += 4;
+                                    Part++;
+                                    goto animation_continuation;
+
+                                // thrown by ninja
+                                case (int)Enums.Ani_IDs_Fighters.ANI_51_THROWN_BY_REPTILE:
+                                    Frame += 4;
+                                    Part++;
+                                    goto animation_continuation;
+
+                                // thrown by ninja
+                                case (int)Enums.Ani_IDs_Fighters.ANI_52_THROWN_BY_SCORPION:
                                     Frame += 4;
                                     Part++;
                                     goto animation_continuation;
 
                                 // nut punch react
-                                case 0x36:
+                                case (int)Enums.Ani_IDs_Fighters.ANI_54_LOW_BLOWED:
                                     Frame += 4;
                                     Part++;
                                     goto animation_continuation;
 
                                 // soul drain
-                                case 0x38:
+                                case (int)Enums.Ani_IDs_Fighters.ANI_56_SOUL_DRAINED:
                                     Frame += 4;
                                     Part++;
                                     goto animation_continuation;
 
                                 // torso
-                                case 0x39:
+                                case (int)Enums.Ani_IDs_Fighters.ANI_57_TORSO_GETTING_RIPPED:
                                     Frame += 4;
                                     Part++;
                                     Globals.PALETTE = Converters.Convert_Palette(Tools.Get_Pointer(ochar * 8 + FATAL_PAL));
                                     goto animation_continuation;
 
                                 // decap
-                                case 0x3c:
+                                case (int)Enums.Ani_IDs_Fighters.ANI_60_FALLING_FROM_DECAPITATION:
                                     Frame += 4;
                                     Part++;
                                     goto animation_continuation;
 
                                 // split in 2
-                                case 66:
+                                case (int)Enums.Ani_IDs_Fighters.ANI_SPLIT_IN_2:
                                     Frame += 4;
+                                    Part++;
+                                    goto animation_continuation;
+
+                                // torso decap
+                                case (int)Enums.Ani_IDs_Fighters.ANI_FALLING_FROM_TORSO_DECAP:
+                                    Frame += 4;
+                                    Part++;
+                                    goto animation_continuation;
+
+                                // pitfall
+                                case (int)Enums.Ani_IDs_Fighters.ANI_PITFALL:
+                                    Frame += 12;
                                     Part++;
                                     goto animation_continuation;
                             }
@@ -831,6 +911,12 @@ namespace MKII_Asset_Extractor
 
                                 // decap
                                 case 0x3c:
+                                    Frame += 4;
+                                    Part++;
+                                    goto animation_continuation;
+
+                                // torso decap
+                                case (int)Enums.Ani_IDs_Fighters.ANI_FALLING_FROM_TORSO_DECAP:
                                     Frame += 4;
                                     Part++;
                                     goto animation_continuation;

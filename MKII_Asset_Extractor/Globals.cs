@@ -23,6 +23,87 @@ namespace MKII_Asset_Extractor
         public static int GFX_BYTES_EXTRACTED = 0;
     }
 
+    public class Constants
+    {
+        public const int M_PALS = 987712;   // MK2+ Specific
+        public const int A_PALS = 987824;   // MK2+ Specific
+        public const int ANI_PITFALLS = 48342;
+
+        public static int[] m_palettes =
+        {
+            M_HH = Tools.Get_Pointer(M_PALS),
+            M_LK = Tools.Get_Pointer(M_PALS + 4),
+            M_JC = Tools.Get_Pointer(M_PALS + 8),
+            M_SA = Tools.Get_Pointer(M_PALS + 12),
+            M_KT = Tools.Get_Pointer(M_PALS + 16),
+            M_ML = Tools.Get_Pointer(M_PALS + 20),
+            M_ST = Tools.Get_Pointer(M_PALS + 24),
+            M_RD = Tools.Get_Pointer(M_PALS + 28),
+            M_SZ = Tools.Get_Pointer(M_PALS + 32),
+            M_RP = Tools.Get_Pointer(M_PALS + 36),
+            M_SC = Tools.Get_Pointer(M_PALS + 40),
+            M_JX = Tools.Get_Pointer(M_PALS + 44),
+            M_GO = Tools.Get_Pointer(M_PALS + 48),
+            M_SK = Tools.Get_Pointer(M_PALS + 52),
+            M_SM = Tools.Get_Pointer(M_PALS + 56),
+            M_NS = Tools.Get_Pointer(M_PALS + 60),
+            M_JD = Tools.Get_Pointer(M_PALS + 64),
+            M_HB = Tools.Get_Pointer(M_PALS + 68)
+        };
+
+        // palettes
+        public static int M_HH;
+        public static int M_LK;
+        public static int M_JC;
+        public static int M_SA;
+        public static int M_KT;
+        public static int M_ML;
+        public static int M_ST;
+        public static int M_RD;
+        public static int M_SZ;
+        public static int M_RP;
+        public static int M_SC;
+        public static int M_JX;
+        public static int M_GO;
+        public static int M_SK;
+        public static int M_SM;
+        public static int M_NS;
+        public static int M_JD;
+        public static int M_HB;
+
+        // alt palettes
+        public static int A_HH = Tools.Get_Pointer(A_PALS);
+        public static int A_LK = Tools.Get_Pointer(A_PALS + 4);
+        public static int A_JC = Tools.Get_Pointer(A_PALS + 8);
+        public static int A_SA = Tools.Get_Pointer(A_PALS + 12);
+        public static int A_KT = Tools.Get_Pointer(A_PALS + 16);
+        public static int A_ML = Tools.Get_Pointer(A_PALS + 20);
+        public static int A_ST = Tools.Get_Pointer(A_PALS + 24);
+        public static int A_RD = Tools.Get_Pointer(A_PALS + 28);
+        public static int A_SZ = Tools.Get_Pointer(A_PALS + 32);
+        public static int A_RP = Tools.Get_Pointer(A_PALS + 36);
+        public static int A_SC = Tools.Get_Pointer(A_PALS + 40);
+        public static int A_JX = Tools.Get_Pointer(A_PALS + 44);
+        public static int A_GO = Tools.Get_Pointer(A_PALS + 48);
+        public static int A_SK = Tools.Get_Pointer(A_PALS + 52);
+        public static int A_SM = Tools.Get_Pointer(A_PALS + 56);
+        public static int A_NS = Tools.Get_Pointer(A_PALS + 60);
+        public static int A_JD = Tools.Get_Pointer(A_PALS + 64);
+        public static int A_HB = Tools.Get_Pointer(A_PALS + 68);
+    }
+
+    /// <summary>
+    /// struct for manual frame extraction option
+    /// </summary>
+    public struct ME_Table
+    {
+        public string folder;
+        public string subfolder;
+        public int frameloc;
+        public int pal_loc;
+        public bool multi_frame;
+    }
+
 	public static class Enums
 	{
         public enum Fighters
@@ -120,7 +201,9 @@ namespace MKII_Asset_Extractor
             //SPEC_ANI_03,			            // 
             //SPEC_ANI_04,			            // 
             //SPEC_ANI_05, 			            // 
-            ANI_SPLIT_IN_2                      // 66 F
+            ANI_SPLIT_IN_2,                     // 66 F
+            ANI_FALLING_FROM_TORSO_DECAP,       // 67
+            ANI_PITFALL                         // 68
         }
 
         public enum Ani_IDs_Fighters2
